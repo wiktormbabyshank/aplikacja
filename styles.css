@@ -1,0 +1,127 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 80%;  /* Zmniejszona szerokość textboxów */
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin: 0 auto; /* Wyśrodkowanie textboxów */
+    display: block; /* Wyświetlanie jako blok */
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 10px; /* Margines górny dla przycisków */
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.forgot-password a {
+    color: #007bff; /* Kolor linku */
+    text-decoration: none; /* Bez podkreślenia */
+}
+
+.forgot-password a:hover {
+    text-decoration: underline; /* Podkreślenie po najechaniu */
+}
+
+.message {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.admin-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff; /* Kolor przycisku */
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none; /* Bez podkreślenia */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.admin-panel:hover {
+    background-color: #0069d9; /* Kolor po najechaniu */
+}
+.container1 {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+nav {
+    margin-bottom: 20px;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+}
