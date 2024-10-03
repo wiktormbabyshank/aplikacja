@@ -1,25 +1,20 @@
 <?php
-session_start(); // Rozpocznij sesję
+session_start(); 
+$servername = "localhost"; 
+$username = "root"; 
+$password = ""; 
+$dbname = "uzytkownicy_sklepu"; 
 
-$servername = "localhost"; // Zmień, jeśli masz inny serwer
-$username = "root"; // Zmień, jeśli masz inny użytkownik
-$password = ""; // Zmień, jeśli masz inne hasło
-$dbname = "uzytkownicy_sklepu"; // Zmień na nazwę swojej bazy danych
-
-// Tworzenie połączenia
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Sprawdzenie połączenia
 if ($conn->connect_error) {
     die("Połączenie nieudane: " . $conn->connect_error);
 }
 
-// Sprawdzenie, czy formularz został wysłany
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Przygotowanie zapytania SQL
     $sql = "SELECT * FROM admini WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
@@ -28,10 +23,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows === 1) {
         $admin = $result->fetch_assoc();
-        // Weryfikacja hasła
+        
         if (password_verify($password, $admin['haslo'])) {
-            // Zalogowany pomyślnie
-            $_SESSION['admin_email'] = $admin['email']; // Zapisz email w sesji
+            
+            $_SESSION['admin_email'] = $admin['email']; 
             header("Location: admin_dashboard.php");
             exit();
         } else {
@@ -41,8 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "Błędny email lub hasło";
     }
 
-    $stmt->close(); // Zamknięcie zapytania
+    $stmt->close(); 
 }
 
-$conn->close(); // Zamknięcie połączenia
+$conn->close(); 
 ?>
