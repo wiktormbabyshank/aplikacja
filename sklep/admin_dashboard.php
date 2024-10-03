@@ -1,9 +1,8 @@
 <?php
-session_start(); // Rozpocznij sesję
+session_start(); 
 
-// Sprawdź, czy admin jest zalogowany
 if (!isset($_SESSION['admin_email'])) {
-    header("Location: index.html"); // Przekierowanie, jeśli admin nie jest zalogowany
+    header("Location: index.html"); 
     exit();
 }
 ?>
@@ -27,7 +26,6 @@ if (!isset($_SESSION['admin_email'])) {
             </ul>
         </nav>
 
-        <!-- Przycisk wylogowania -->
         <form action="logout.php" method="post">
             <button type="submit">Wyloguj się</button>
         </form>
