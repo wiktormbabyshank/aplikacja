@@ -30,12 +30,12 @@ label {
 }
 
 input {
-    width: 80%;  /* Zmniejszona szerokość textboxów */
+    width: 80%;  
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 3px;
-    margin: 0 auto; /* Wyśrodkowanie textboxów */
-    display: block; /* Wyświetlanie jako blok */
+    margin: 0 auto; 
+    display: block; 
 }
 
 button {
@@ -46,7 +46,7 @@ button {
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    margin-top: 10px; /* Margines górny dla przycisków */
+    margin-top: 10px; 
 }
 
 button:hover {
@@ -59,12 +59,12 @@ button:hover {
 }
 
 .forgot-password a {
-    color: #007bff; /* Kolor linku */
-    text-decoration: none; /* Bez podkreślenia */
+    color: #007bff; 
+    text-decoration: none; 
 }
 
 .forgot-password a:hover {
-    text-decoration: underline; /* Podkreślenie po najechaniu */
+    text-decoration: underline; 
 }
 
 .message {
@@ -76,16 +76,16 @@ button:hover {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #007bff; /* Kolor przycisku */
+    background-color: #007bff; 
     color: #fff;
     padding: 10px 15px;
     border-radius: 5px;
-    text-decoration: none; /* Bez podkreślenia */
+    text-decoration: none; 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .admin-panel:hover {
-    background-color: #0069d9; /* Kolor po najechaniu */
+    background-color: #0069d9; 
 }
 .container1 {
     width: 80%;
