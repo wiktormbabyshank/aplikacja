@@ -1,20 +1,25 @@
 <?php
 session_start(); 
-$servername = "localhost"; 
-$username = "root"; 
-$password = ""; 
-$dbname = "uzytkownicy_sklepu"; 
+
+$servername = "pma.ct8.pl"; 
+$username = "m50583_kacper";       
+$password = "79UiZ2Vb4F4Wxiz";  
+$dbname = "m50583_uzytkownicy_sklepu";  
+
 
 $conn = new mysqli($servername, $username, $password, $dbname);
+
 
 if ($conn->connect_error) {
     die("Połączenie nieudane: " . $conn->connect_error);
 }
 
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
+ 
     $sql = "SELECT * FROM admini WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
@@ -23,10 +28,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows === 1) {
         $admin = $result->fetch_assoc();
-        
+
         if (password_verify($password, $admin['haslo'])) {
-            
-            $_SESSION['admin_email'] = $admin['email']; 
+
+            $_SESSION['admin_email'] = $admin['email'];
             header("Location: admin_dashboard.php");
             exit();
         } else {
@@ -36,8 +41,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "Błędny email lub hasło";
     }
 
-    $stmt->close(); 
+    $stmt->close();
 }
 
-$conn->close(); 
+$conn->close();
 ?>
