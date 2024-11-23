@@ -127,8 +127,6 @@ if (isset($_GET['id'])) {
             <button type="submit">Aktualizuj Zamówienie</button>
         </form>
     </div>
-
-    <!-- Back button -->
     <a href="admin_dashboard.php" class="back-button">Powrót do panelu</a>
 </body>
 </html>
