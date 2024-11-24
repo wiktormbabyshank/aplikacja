@@ -1,12 +1,6 @@
 <?php
 session_start();
-include 'db_connection.php'; 
-
-if (!isset($_SESSION['admin_email'])) {
-    header("Location: index.html");
-    exit();
-}
-
+include('db_connection.php'); 
 
 if (isset($_GET['id'])) {
     $userId = $_GET['id'];

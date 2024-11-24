@@ -1,13 +1,7 @@
 <?php
 session_start();
-
-if (!isset($_SESSION['admin_email'])) {
-    header("Location: index.html");
-    exit();
-}
-
-
 include('db_connection.php');
+
 ?>
 
 <!DOCTYPE html>

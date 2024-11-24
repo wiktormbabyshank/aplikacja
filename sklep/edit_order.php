@@ -2,12 +2,6 @@
 session_start();
 include 'db_connection.php'; 
 
-if (!isset($_SESSION['admin_email'])) {
-    header("Location: index.html");
-    exit();
-}
-
-
 if (isset($_GET['id'])) {
     $orderId = intval($_GET['id']); 
     $result = $conn->query("SELECT * FROM zamowienia WHERE id = $orderId");
@@ -29,7 +23,6 @@ if (isset($_GET['id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edytuj Zamówienie</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
     <style>
         body {
             font-family: Arial, sans-serif;
