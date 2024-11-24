@@ -73,27 +73,27 @@
         <?php
             include('db_connection.php');
 
-            // Zapytanie SQL do pobrania produktów i zdjęć
+           
             $query = "SELECT products.id, products.name, products.price, products.quantity, product_images.image_path 
                       FROM products 
                       INNER JOIN product_images ON products.id = product_images.product_id";
 
             $result = $conn->query($query);
 
-            // Inicjalizacja zmiennej do przechowywania ID bieżącego produktu
+            
             $current_product_id = null;
 
             if ($result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
 
-                    // Sprawdzenie, czy ID produktu się zmieniło
+                    
                     if ($current_product_id !== $row['id']) {
-                        // Jeśli ID się zmieniło, zamykamy poprzedni produkt
+                        
                         if ($current_product_id !== null) {
-                            echo "</div>"; // Zamknięcie poprzedniego div'a
+                            echo "</div>"; 
                         }
 
-                        // Rozpoczynamy nowy div dla nowego produktu
+                        
                         $current_product_id = $row['id'];
                         echo "<div class='okienko_produktu'>";
                         echo "<form action='product_page.php'>";
@@ -103,15 +103,12 @@
                         echo "<button type='submit'>Kup</button>";
                     }
 
-                    // Wyświetlanie zdjęcia produktu
+                   
                     echo "<img src='" . htmlspecialchars($row['image_path']) . "' alt='Product Image' class='zdjeciaprod'>";
 
                 }
 
                 
-                
-
-                // Zamknięcie ostatniego div'a po zakończeniu pętli
                 echo "</div>";
             } else {
                 echo "<p>Brak produktów do wyświetlenia.</p>";
