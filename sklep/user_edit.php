@@ -2,14 +2,13 @@
 session_start();
 include('db_connection.php');
 
-// Sprawdzamy, czy użytkownik jest zalogowany
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.html");
     exit;
 }
 
-// Pobieranie danych użytkownika z bazy
-$user_id = $_SESSION['id']; // ID użytkownika zapisane w sesji
+
+$user_id = $_SESSION['id']; 
 $query = "SELECT * FROM uzytkownicy WHERE id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
@@ -54,7 +53,7 @@ $user = $result->fetch_assoc();
     </div>
 
     <?php
-    // Przetwarzanie formularza
+    
     if (isset($_POST['submit'])) {
         $imie = $_POST['imie'];
         $nazwisko = $_POST['nazwisko'];
@@ -62,7 +61,6 @@ $user = $result->fetch_assoc();
         $adres = $_POST['adres'];
         $telefon = $_POST['telefon'];
 
-        // Zaktualizowanie danych w bazie
         $update_query = "UPDATE uzytkownicy SET imie = ?, nazwisko = ?, email = ?, adres = ?, telefon = ? WHERE id = ?";
         $update_stmt = $conn->prepare($update_query);
         $update_stmt->bind_param("sssssi", $imie, $nazwisko, $email, $adres, $telefon, $user_id);
