@@ -19,7 +19,7 @@
         echo "<p class = 'informacja_o_zalogowaniu'>Zalogowany jako: " . htmlspecialchars($_SESSION['email']) . "</p>";
         ?>
 
-        <!-- Menu wyboru -->
+        
         <nav>
             <ul>
                 <li><a href="user_edit.php">Panel klienta</a></li>
@@ -35,7 +35,7 @@
 
     <div class="produkty">
         <?php
-            // Pobieranie produktów
+            
             include('db_connection.php');
             $query = "SELECT products.id, products.name, products.price, products.quantity, product_images.image_path 
                       FROM products 
@@ -47,7 +47,7 @@
             if ($result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
 
-                    // Pokaż produkt
+                
                     if ($current_product_id !== $row['id']) {
                         if ($current_product_id !== null) {
                             echo "</div>"; 
@@ -61,7 +61,7 @@
                         echo "<button type='submit' class='button-user'>Kup</button>";
                     }
 
-                    // Wyświetlanie obrazka
+                    
                     echo "<img src='" . htmlspecialchars($row['image_path']) . "' alt='Product Image' class='zdjeciaprod'>";
                 }
 
