@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($stmt->execute()) {
         echo "Rejestracja zakończona sukcesem!";
 
-        header("Location: dashboard.php");
+        header("Location: index.html");
     } else {
         echo "Błąd: " . $stmt->error;
     }

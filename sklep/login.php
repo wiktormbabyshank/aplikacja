@@ -19,6 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $user['haslo'])) { 
 
             $_SESSION['loggedin'] = true;
+            $_SESSION['id'] = $user['id'];
             $_SESSION['imie'] = $user['imie'];
             $_SESSION['email'] = $user['email'];
             header("Location: dashboard.php");

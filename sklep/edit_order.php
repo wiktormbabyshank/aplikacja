@@ -24,32 +24,10 @@ if (isset($_GET['id'])) {
     <title>Edytuj Zamówienie</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
 
-        .container1 {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
 
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        
 
         label {
             font-weight: bold;
@@ -64,7 +42,7 @@ if (isset($_GET['id'])) {
             box-sizing: border-box;
         }
 
-        button[type="submit"] {
+        .button-edito[type="submit"] {
             padding: 10px;
             background-color: #28a745; 
             color: white;
@@ -100,9 +78,9 @@ if (isset($_GET['id'])) {
     </style>
 </head>
 <body>
-    <div class="container1">
+    <div class="container5">
         <h1>Edytuj Zamówienie</h1>
-        <form action="edit_order_process.php" method="POST">
+        <form class="form-edito" action="edit_order_process.php" method="POST">
             <input type="hidden" name="id" value="<?php echo htmlspecialchars($order['id']); ?>">
 
             <label for="user">Użytkownik:</label>
@@ -117,7 +95,7 @@ if (isset($_GET['id'])) {
                 <option value="Completed" <?php echo ($order['status'] == 'Completed') ? 'selected' : ''; ?>>Zrealizowane</option>
             </select>
 
-            <button type="submit">Aktualizuj Zamówienie</button>
+            <button type="submit" class="button-edito">Aktualizuj Zamówienie</button>
         </form>
     </div>
     <a href="admin_dashboard.php" class="back-button">Powrót do panelu</a>

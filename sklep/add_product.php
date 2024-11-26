@@ -62,28 +62,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dodaj Produkt</title>
     <link rel="stylesheet" href="styles.css">
-  <style>
-    .back-button {
-            position: fixed; 
-            bottom: 20px; 
-            right: 20px; 
-            background-color: #007BFF; 
-            color: white;
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 5px; 
-            cursor: pointer;
-            text-decoration: none; 
-            font-size: 16px; 
-            transition: background-color 0.3s;
-        }
 
-        .back-button:hover {
-            background-color: #0056b3; 
-        }
-    </style>
 </head>
-<body>
+<body class="body-main">
     <div class="container1">
         <h1>Dodaj Nowy Produkt</h1>
         <form action="add_product.php" method="post" enctype="multipart/form-data">

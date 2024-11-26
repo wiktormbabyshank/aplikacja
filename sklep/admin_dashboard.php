@@ -11,88 +11,10 @@ include('db_connection.php');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administracyjny</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
-
-        .container1 {
-            max-width: 1200px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        nav ul {
-            list-style-type: none;
-            padding: 0;
-            text-align: center;
-        }
-
-        nav ul li {
-            display: inline;
-            margin: 0 15px;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #007BFF;
-            font-weight: bold;
-        }
-
-        nav ul li a:hover {
-            text-decoration: underline;
-        }
-
-        button {
-            padding: 10px;
-            background-color: #28a745; 
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: inline-block;
-            margin-top: 10px; 
-        }
-
-        button:hover {
-            background-color: #218838;
-        }
-
-        .back-button {
-            position: fixed; 
-            bottom: 20px;
-            right: 20px; 
-            background-color: #007BFF; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px;
-            border-radius: 5px; 
-            cursor: pointer; 
-            text-decoration: none; 
-            font-size: 16px;
-            transition: background-color 0.3s; 
-        }
-
-        .back-button:hover {
-            background-color: #0056b3; 
-        }
-    </style>
 </head>
-<body>
-    <div class="container1">
-        <h1>Panel Administracyjny</h1>
+<body class="body-main">
+    <div class="container2">
+        <h1 class="h1-admin">Panel Administracyjny</h1>
         <nav>
             <ul>
                 <li><a href="#products">Zarządzaj produktami</a></li>
@@ -102,7 +24,7 @@ include('db_connection.php');
         </nav>
 
         <form action="logout.php" method="post">
-            <button type="submit">Wyloguj się</button>
+            <button type="submit" class="button-admin">Wyloguj się</button>
         </form>
 
      <section id="products">
@@ -110,7 +32,7 @@ include('db_connection.php');
 
 
     <form action="add_product.php" method="post" enctype="multipart/form-data">
-        <button type="submit">Dodaj nowy produkt</button>
+        <button type="submit" class="button-admin">Dodaj nowy produkt</button>
     </form>
 
 
@@ -159,11 +81,11 @@ include('db_connection.php');
                     <td>
                         <form action='edit_product.php' method='get' style='display:inline;'>
                             <input type='hidden' name='id' value='{$row['id']}'>
-                            <button type='submit'>Edytuj</button>
+                            <button type='submit'  class='edit-button'>Edytuj</button>
                         </form>
                         <form action='delete_product.php' method='post' style='display:inline;' onsubmit='return confirmDelete();'>
                             <input type='hidden' name='id' value='{$row['id']}'>
-                            <button type='submit'>Usuń</button>
+                            <button type='submit' class='delete-button'>Usuń</button>
                         </form>
                     </td>
                 </tr>";
@@ -281,7 +203,7 @@ function confirmDelete() {
                     <td>
                         <form action='edit_order.php' method='get' style='display:inline;'>
                             <input type='hidden' name='id' value='{$row['order_id']}'>
-                            <button type='submit'>Edytuj</button>
+                            <button type='submit' class='button-admin'>Edytuj</button>
                         </form>
                         <form action='delete_order.php' method='post' style='display:inline;' onsubmit='return confirmDelete();'>
     <input type='hidden' name='id' value='{$row['order_id']}'>
