@@ -58,8 +58,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             
             $mail->send();
-            echo "Na Twój adres e-mail wysłano przypomnienie hasła";
-            echo "<a href='index.html'>Powrót do logowania</a>";
+            echo "<!DOCTYPE html>
+<html lang='pl'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+
+    <link rel='stylesheet' href='styles.css'>
+    
+</head><body class='body-main'>
+    <div class='container'>
+        <h2>Na Twój adres e-mail wysłano przypomnienie hasła.</h2>
+    </div>";
+            echo "<a href='index.html' class='admin-panel'>Powrót do logowania</a></body></html>";
         } catch (Exception $e) {
             echo "Wystąpił błąd podczas wysyłania wiadomości e-mail. Szczegóły: {$mail->ErrorInfo}";
         }

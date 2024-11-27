@@ -6,7 +6,6 @@ if (isset($_GET['id'])) {
     $orderId = intval($_GET['id']); 
     $result = $conn->query("SELECT * FROM zamowienia WHERE id = $orderId");
 
- 
     if ($result->num_rows === 0) {
         die("Zamówienie nie zostało znalezione.");
     }
@@ -22,82 +21,83 @@ if (isset($_GET['id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edytuj Zamówienie</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-
-
-
-        
-
-        label {
-            font-weight: bold;
+        body {
+            background-color: #f8f9fa;
         }
-
-        input[type="number"],
-        select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        .container-edit-order {
+            margin-top: 50px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-control {
+            margin-bottom: 15px;
+        }
+        .btn-update {
             width: 100%;
-            box-sizing: border-box;
-        }
-
-        .button-edito[type="submit"] {
-            padding: 10px;
-            background-color: #28a745; 
+            padding: 12px;
+            background-color: #28a745;
             color: white;
+            font-size: 16px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
         }
-
-        button[type="submit"]:hover {
-            background-color: #218838; 
+        .btn-update:hover {
+            background-color: #0056b3;
         }
-
-       
         .back-button {
-            position: fixed; 
-            bottom: 20px; 
-            right: 20px; 
-            background-color: #007BFF; 
-            color: white; 
-            border: none; 
+            display: block;
+            text-align: center;
+            margin-top: 20px;
             padding: 10px 20px;
-            border-radius: 5px; 
-            cursor: pointer;
-            text-decoration: none; 
-            font-size: 16px;
-            transition: background-color 0.3s; 
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
         }
-
         .back-button:hover {
-            background-color: #0056b3; 
+            background-color: #5a6268;
         }
     </style>
 </head>
+
 <body>
-    <div class="container5">
+    <div class="container container-edit-order">
         <h1>Edytuj Zamówienie</h1>
-        <form class="form-edito" action="edit_order_process.php" method="POST">
+        <form action="edit_order_process.php" method="POST">
             <input type="hidden" name="id" value="<?php echo htmlspecialchars($order['id']); ?>">
 
-            <label for="user">Użytkownik:</label>
-            <input type="text" id="user" value="<?php echo htmlspecialchars($order['user_id']); ?>" disabled>
+            <div class="mb-3">
+                <label for="user" class="form-label">Użytkownik:</label>
+                <input type="text" id="user" class="form-control" value="<?php echo isset($order['imie']) ? htmlspecialchars($order['imie']) : 'Nie znaleziono użytkownika'; ?>" disabled>
+            </div>
 
-            <label for="amount">Kwota:</label>
-            <input type="number" id="amount" name="amount" value="<?php echo htmlspecialchars($order['amount']); ?>" required>
+            <div class="mb-3">
+                <label for="amount" class="form-label">Kwota:</label>
+                <input type="number" id="amount" class="form-control" name="amount" value="<?php echo htmlspecialchars($order['amount']); ?>" required>
+            </div>
 
-            <label for="status">Status:</label>
-            <select id="status" name="status">
-                <option value="Pending" <?php echo ($order['status'] == 'Pending') ? 'selected' : ''; ?>>W trakcie realizacji</option>
-                <option value="Completed" <?php echo ($order['status'] == 'Completed') ? 'selected' : ''; ?>>Zrealizowane</option>
-            </select>
+            <div class="mb-3">
+                <label for="status" class="form-label">Status:</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="Pending" <?php echo ($order['status'] == 'Pending') ? 'selected' : ''; ?>>W trakcie realizacji</option>
+                    <option value="Completed" <?php echo ($order['status'] == 'Completed') ? 'selected' : ''; ?>>Zrealizowane</option>
+                </select>
+            </div>
 
-            <button type="submit" class="button-edito">Aktualizuj Zamówienie</button>
+            <button type="submit" class="btn-update">Aktualizuj Zamówienie</button>
         </form>
+
+        <a href="admin_dashboard.php" class="back-button">Powrót do panelu</a>
     </div>
-    <a href="admin_dashboard.php" class="back-button">Powrót do panelu</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

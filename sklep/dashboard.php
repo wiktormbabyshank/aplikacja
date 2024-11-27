@@ -1,75 +1,275 @@
+<?php
+session_start();
+include('db_connection.php');
+
+
+if (!isset($_SESSION['id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+
+$user_id = $_SESSION['id'];
+
+
+$categoriesResult = $conn->query("SELECT * FROM categories");
+
+
+$searchQuery = "";
+$categoryFilter = isset($_GET['category']) ? intval($_GET['category']) : null;
+
+if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
+    $searchQuery = trim($_GET['search']);
+}
+?>
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body class="body-user">
-    <div class="stopka2">
-        <?php
-        session_start();
-        include('db_connection.php');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-        if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-            header("Location: index.html");
-            exit;
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .product-card img {
+            height: 200px; 
+            object-fit: cover; 
+        }
+        .product-card {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .logout-btn {
+            background-color: red;
+            border: none;
+        }
+        .logout-btn:hover {
+            background-color: darkred;
+        }
+        .card-img-top {
+            height: 200px; 
+            object-fit: cover; 
+            width: 100%; 
+            border-radius: 10px; 
+        }
+        .favorite-btn {
+            font-size: 1.5rem;
+            color: #ddd; 
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .favorite-btn .fa-heart {
+            font-size: 1.5rem;
+        }
+        .favorite-btn.favorited .fa-heart {
+            color: red; 
+        }
+        .favorite-btn:hover .fa-heart {
+            color: #ff6666; 
+        }
+        .center-links {
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">PoopAndYou</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto center-links">
+                <?php
+                $pagesResult = $conn->query("SELECT title, slug FROM pages");
+                while ($page = $pagesResult->fetch_assoc()) {
+                    echo "<li class='nav-item'><a class='nav-link' href='page.php?slug=" . htmlspecialchars($page['slug']) . "'>" . htmlspecialchars($page['title']) . "</a></li>";
+                }
+                ?>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="cart.php">
+                        <i class="fas fa-shopping-cart"></i> Koszyk
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="user_edit.php">Profil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-danger logout-btn" href="logout.php">Wyloguj się</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="text-center">Katalog produktów</h1>
+    <form method="GET" action="dashboard.php" class="mb-4">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <input type="text" name="search" class="form-control" placeholder="Szukaj produktu..." value="<?php echo htmlspecialchars($searchQuery); ?>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <select name="category" class="form-select">
+                    <option value="">Wybierz kategorię</option>
+                    <?php while ($category = $categoriesResult->fetch_assoc()): ?>
+                        <option value="<?php echo $category['id']; ?>" <?php echo ($categoryFilter == $category['id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($category['name']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <button type="submit" class="btn btn-primary w-100">Filtruj</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
+        <?php
+        $query = "
+            SELECT DISTINCT 
+                products.id, 
+                products.name, 
+                products.price, 
+                products.quantity, 
+                GROUP_CONCAT(product_images.image_path) AS images,
+                IF(ulubione.id IS NOT NULL, 1, 0) AS is_favorite
+            FROM products
+            LEFT JOIN product_images ON products.id = product_images.product_id
+            LEFT JOIN ulubione ON products.id = ulubione.item_id AND ulubione.user_id = ?
+            LEFT JOIN product_categories ON products.id = product_categories.product_id
+            WHERE 1
+        ";
+
+        $params = [$user_id];
+        $types = "i";
+
+        if (!empty($searchQuery)) {
+            $query .= " AND products.name LIKE ?";
+            $params[] = "%" . $searchQuery . "%";
+            $types .= "s";
         }
 
-        echo "<h1 class='powitanie'>Witaj, " . htmlspecialchars($_SESSION['imie']) . "!</h1>";
-        echo "<p class = 'informacja_o_zalogowaniu'>Zalogowany jako: " . htmlspecialchars($_SESSION['email']) . "</p>";
-        ?>
+        if ($categoryFilter) {
+            $query .= " AND product_categories.category_id = ?";
+            $params[] = $categoryFilter;
+            $types .= "i";
+        }
 
-        
-        <nav>
-            <ul>
-                <li><a href="user_edit.php">Panel klienta</a></li>
-                <li><a href="logout.php">Wyloguj się</a></li>
-            </ul>
-        </nav>
-        
-        <form action="logout.php" method="post">
-            <button type="submit" class="button-user">Wyloguj się</button>
-        </form>
-    </div>
+        $query .= " GROUP BY products.id";
 
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    <div class="produkty">
-        <?php
-            
-            include('db_connection.php');
-            $query = "SELECT products.id, products.name, products.price, products.quantity, product_images.image_path 
-                      FROM products 
-                      INNER JOIN product_images ON products.id = product_images.product_id";
-            $result = $conn->query($query);
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $images = explode(',', $row['images']);
+                $main_image = $images[0];
+                $is_favorite = $row['is_favorite'] ? true : false;
 
-            $current_product_id = null;
+                echo "<div class='col-md-4 col-lg-3 mb-4'>";
+                echo "<div class='card product-card'>";
+                echo "<img src='" . htmlspecialchars($main_image) . "' class='card-img-top' alt='Product Image'>";
+                echo "<div class='card-body'>";
+                echo "<h5 class='card-title'>" . htmlspecialchars($row['name']) . "</h5>";
+                echo "<p class='card-text'><strong>" . htmlspecialchars($row['price']) . " zł</strong></p>";
+                echo "<p class='text-muted'>Ilość: " . htmlspecialchars($row['quantity']) . "</p>";
+                echo "<div class='d-flex justify-content-between align-items-center'>";
 
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
+                echo "<form action='product_page.php' method='GET'>";
+                echo "<input type='hidden' name='product_id' value='" . htmlspecialchars($row['id']) . "'>";
+                echo "<button type='submit' class='btn btn-success'>Kup</button>";
+                echo "</form>";
 
-                
-                    if ($current_product_id !== $row['id']) {
-                        if ($current_product_id !== null) {
-                            echo "</div>"; 
-                        }
-                        $current_product_id = $row['id'];
-                        echo "<div class='okienko_produktu'>";
-                        echo "<form action='product_page.php'>";
-                        echo "<h1>" . htmlspecialchars($row['name']) . "</h1>";
-                        echo "<h2>" . htmlspecialchars($row['price']) . " zł</h2>";
-                        echo "<h3>Ilość: " . htmlspecialchars($row['quantity']) . "</h3>";
-                        echo "<button type='submit' class='button-user'>Kup</button>";
-                    }
+                echo "<button class='btn btn-primary add-to-cart-btn' data-item-id='" . htmlspecialchars($row['id']) . "'>Do koszyka</button>";
 
-                    
-                    echo "<img src='" . htmlspecialchars($row['image_path']) . "' alt='Product Image' class='zdjeciaprod'>";
-                }
+                $favorite_class = $is_favorite ? 'fas fa-heart favorited' : 'far fa-heart';
+                echo "<button class='favorite-btn' data-item-id='" . htmlspecialchars($row['id']) . "'>";
+                echo "<i class='$favorite_class'></i>";
+                echo "</button>";
 
                 echo "</div>";
-            } else {
-                echo "<p>Brak produktów do wyświetlenia.</p>";
+                echo "</div>";
+                echo "</div>";
+                echo "</div>";
             }
+        } else {
+            echo "<p class='text-center text-muted'>Brak produktów spełniających kryteria.</p>";
+        }
         ?>
     </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const itemId = this.getAttribute('data-item-id');
+            const heartIcon = this.querySelector('.fa-heart');
+            const isFavorited = heartIcon.classList.contains('fas'); 
+
+            fetch(isFavorited ? 'remove_from_favorites.php' : 'add_to_favorites.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ item_id: itemId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    heartIcon.classList.toggle('far'); 
+                    heartIcon.classList.toggle('fas'); 
+                } else {
+                    alert('Błąd: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    const cartButtons = document.querySelectorAll('.add-to-cart-btn');
+
+    cartButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const itemId = this.getAttribute('data-item-id');
+
+            fetch('add_to_cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ item_id: itemId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Dodano do koszyka!');
+                } else {
+                    alert('Błąd: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
