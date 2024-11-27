@@ -105,27 +105,42 @@ while ($order = $orders_result->fetch_assoc()) {
     </style>
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">PoopAndYou</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="cart.php"><i class="fas fa-shopping-cart"></i> Koszyk</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="user_edit.php">Profil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-danger" href="logout.php">Wyloguj się</a>
-                    </li>
-                </ul>
-            </div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="dashboard.php">PoopAndYou</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <?php
+                $pagesResult = $conn->query("SELECT title, slug FROM pages");
+                while ($page = $pagesResult->fetch_assoc()) {
+                    echo "<li class='nav-item'><a class='nav-link' href='page.php?slug=" . htmlspecialchars($page['slug']) . "'>" . htmlspecialchars($page['title']) . "</a></li>";
+                }
+                ?>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="cart.php">
+                        <i class="fas fa-shopping-cart"></i> Koszyk
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="ulubione.php">
+                        <i class="fas fa-heart"></i> Ulubione
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="user_edit.php">Profil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-danger logout-btn" href="logout.php">Wyloguj się</a>
+                </li>
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <div class="container">
         <h1 class="text-center mb-4">Edytuj swoje dane</h1>
@@ -179,7 +194,7 @@ while ($order = $orders_result->fetch_assoc()) {
                             <div class="order-title">ID Zamówienia: <?= $order['id'] ?></div>
                             <div>Data utworzenia: <?= $order['created_at'] ?></div>
                             <div>Status: <span class="order-status text-warning">W realizacji</span></div>
-                            <div>Kwota: <?= number_format($order['amount'], 2) ?> zł</div>
+                            <div>Kwota: <?= number_format($order['price'], 2) ?> zł</div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -195,7 +210,7 @@ while ($order = $orders_result->fetch_assoc()) {
                             <div class="order-title">ID Zamówienia: <?= $order['id'] ?></div>
                             <div>Data zamknięcia: <?= $order['closed_at'] ?></div>
                             <div>Status: <span class="order-status text-success">Zrealizowane</span></div>
-                            <div>Kwota: <?= number_format($order['amount'], 2) ?> zł</div>
+                            <div>Kwota: <?= number_format($order['price'], 2) ?> zł</div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>

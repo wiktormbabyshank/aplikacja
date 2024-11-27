@@ -1,8 +1,8 @@
 <?php
 
-$servername = "pma.ct8.pl"; 
-$username = "m50583_kacper";  
-$password = "79UiZ2Vb4F4Wxiz"; 
+$servername = "localhost"; 
+$username = "root";  
+$password = ""; 
 $dbname = "m50583_uzytkownicy_sklepu"; 
 
 

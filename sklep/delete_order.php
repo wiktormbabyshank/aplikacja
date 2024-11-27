@@ -1,16 +1,21 @@
 <?php
+session_start();
 include('db_connection.php');
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
-    $order_id = $_POST['id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id']) && ctype_digit($_POST['id'])) {
+    $orderId = intval($_POST['id']);
 
-    $stmt = $conn->prepare("DELETE FROM zamowienia WHERE id = ?");
-    $stmt->bind_param("i", $order_id);
-    $stmt->execute();
+    $query = "DELETE FROM zamowienia WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $orderId);
 
-
-    header("Location: admin_dashboard.php");
+    if ($stmt->execute()) {
+        header("Location: admin_dashboard.php#orders");
+        exit;
+    } else {
+        die("Błąd podczas usuwania zamówienia: " . $conn->error);
+    }
+} else {
+    die("Nieprawidłowe żądanie.");
 }
-
-$conn->close();
 ?>

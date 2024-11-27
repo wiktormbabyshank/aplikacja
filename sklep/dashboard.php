@@ -1,19 +1,29 @@
 <?php
+session_set_cookie_params([
+    'lifetime' => 0, 
+    'path' => '/',
+    'domain' => '',
+    'secure' => isset($_SERVER['HTTPS']), 
+    'httponly' => true, 
+    'samesite' => 'Strict' 
+]);
+
 session_start();
-include('db_connection.php');
 
+if (!isset($_SESSION['session_initialized'])) {
+    $_SESSION['session_initialized'] = true;
 
-if (!isset($_SESSION['id'])) {
-    header("Location: login.php");
-    exit;
+    if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+        unset($_SESSION['cart']);
+    }
 }
 
+include('db_connection.php');
 
-$user_id = $_SESSION['id'];
-
+$isLoggedIn = isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
+$user_id = $isLoggedIn ? $_SESSION['id'] : null;
 
 $categoriesResult = $conn->query("SELECT * FROM categories");
-
 
 $searchQuery = "";
 $categoryFilter = isset($_GET['category']) ? intval($_GET['category']) : null;
@@ -22,6 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
     $searchQuery = trim($_GET['search']);
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pl">
@@ -101,12 +112,23 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
                         <i class="fas fa-shopping-cart"></i> Koszyk
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="user_edit.php">Profil</a>
-                </li>
-                <li class="nav-item">
-                    <a class="btn btn-danger logout-btn" href="logout.php">Wyloguj się</a>
-                </li>
+                <?php if ($isLoggedIn): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="ulubione.php">
+                            <i class="fas fa-heart"></i> Ulubione
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_edit.php">Profil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-danger logout-btn" href="logout.php">Wyloguj się</a>
+                    </li>
+                <?php else: ?>
+                    <li class="nav-item">
+                        <a class="btn btn-primary" href="index.html">Zaloguj się</a>
+                    </li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
@@ -177,7 +199,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
                 $images = explode(',', $row['images']);
-                $main_image = $images[0];
+                $main_image = $images[0] ?? 'default.jpg';
                 $is_favorite = $row['is_favorite'] ? true : false;
 
                 echo "<div class='col-md-4 col-lg-3 mb-4'>";
@@ -187,19 +209,22 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
                 echo "<h5 class='card-title'>" . htmlspecialchars($row['name']) . "</h5>";
                 echo "<p class='card-text'><strong>" . htmlspecialchars($row['price']) . " zł</strong></p>";
                 echo "<p class='text-muted'>Ilość: " . htmlspecialchars($row['quantity']) . "</p>";
+
                 echo "<div class='d-flex justify-content-between align-items-center'>";
 
-                echo "<form action='product_page.php' method='GET'>";
+                echo "<form action='" . ($isLoggedIn ? "product_page.php" : "product_page_unlogged.php") . "' method='GET'>";
                 echo "<input type='hidden' name='product_id' value='" . htmlspecialchars($row['id']) . "'>";
                 echo "<button type='submit' class='btn btn-success'>Kup</button>";
                 echo "</form>";
 
                 echo "<button class='btn btn-primary add-to-cart-btn' data-item-id='" . htmlspecialchars($row['id']) . "'>Do koszyka</button>";
 
-                $favorite_class = $is_favorite ? 'fas fa-heart favorited' : 'far fa-heart';
-                echo "<button class='favorite-btn' data-item-id='" . htmlspecialchars($row['id']) . "'>";
-                echo "<i class='$favorite_class'></i>";
-                echo "</button>";
+                if ($isLoggedIn) {
+                    $favorite_class = $is_favorite ? 'fas fa-heart favorited' : 'far fa-heart';
+                    echo "<button class='favorite-btn' data-item-id='" . htmlspecialchars($row['id']) . "'>";
+                    echo "<i class='$favorite_class'></i>";
+                    echo "</button>";
+                }
 
                 echo "</div>";
                 echo "</div>";
@@ -215,41 +240,14 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-
-    favoriteButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const itemId = this.getAttribute('data-item-id');
-            const heartIcon = this.querySelector('.fa-heart');
-            const isFavorited = heartIcon.classList.contains('fas'); 
-
-            fetch(isFavorited ? 'remove_from_favorites.php' : 'add_to_favorites.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ item_id: itemId }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    heartIcon.classList.toggle('far'); 
-                    heartIcon.classList.toggle('fas'); 
-                } else {
-                    alert('Błąd: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
-    });
-
     const cartButtons = document.querySelectorAll('.add-to-cart-btn');
 
     cartButtons.forEach(button => {
         button.addEventListener('click', function () {
             const itemId = this.getAttribute('data-item-id');
+            const isLoggedIn = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
 
-            fetch('add_to_cart.php', {
+            fetch(isLoggedIn ? 'add_to_cart.php' : 'add_to_session_cart.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -267,6 +265,36 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => console.error('Error:', error));
         });
     });
+
+    if (<?php echo $isLoggedIn ? 'true' : 'false'; ?>) {
+        const favoriteButtons = document.querySelectorAll('.favorite-btn');
+
+        favoriteButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const itemId = this.getAttribute('data-item-id');
+                const heartIcon = this.querySelector('.fa-heart');
+                const isFavorited = heartIcon.classList.contains('fas');
+
+                fetch(isFavorited ? 'remove_from_favorites.php' : 'add_to_favorites.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ item_id: itemId }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        heartIcon.classList.toggle('far');
+                        heartIcon.classList.toggle('fas');
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    }
 });
 </script>
 

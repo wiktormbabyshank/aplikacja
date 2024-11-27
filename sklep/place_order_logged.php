@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 include('db_connection.php');
 
@@ -6,8 +6,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    die("Dostęp zabroniony. Zaloguj się, aby złożyć zamówienie.");
+}
+
 if (!isset($_GET['product_id']) || empty($_GET['product_id']) || !ctype_digit($_GET['product_id'])) {
-    die("Nieprawidłowy identyfikator produktu.");
+    die("Nieprawidłowy identyfikator produktu: " . htmlspecialchars($_GET['product_id'] ?? 'Brak'));
 }
 
 $product_id = intval($_GET['product_id']);
@@ -22,10 +26,26 @@ $stmt_product->execute();
 $result_product = $stmt_product->get_result();
 
 if ($result_product->num_rows === 0) {
-    die("Produkt o podanym ID nie istnieje.");
+    die("Produkt o ID $product_id nie istnieje w bazie danych.");
 }
 
 $product = $result_product->fetch_assoc();
+
+$user_id = $_SESSION['id'];
+$query_user = "SELECT imie, nazwisko, email, phone, street, house_number, postal_code, city FROM uzytkownicy WHERE id = ?";
+$stmt_user = $conn->prepare($query_user);
+if (!$stmt_user) {
+    die("Błąd zapytania SQL: " . $conn->error);
+}
+$stmt_user->bind_param("i", $user_id);
+$stmt_user->execute();
+$result_user = $stmt_user->get_result();
+
+if ($result_user->num_rows === 0) {
+    die("Dane użytkownika nie zostały znalezione.");
+}
+
+$user = $result_user->fetch_assoc();
 
 $query_payment_methods = "SELECT id, name FROM payment_methods";
 $result_payment_methods = $conn->query($query_payment_methods);
@@ -69,39 +89,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_price = $product['price'];
     $total_price = $product_price * $amount;
 
-    if (empty($imie) || empty($nazwisko) || empty($email) || empty($phone) || 
-        empty($street) || empty($house_number) || empty($postal_code) || empty($city) || $amount <= 0) {
+    if ($amount <= 0 || empty($imie) || empty($nazwisko) || empty($email) || empty($phone) || 
+        empty($street) || empty($house_number) || empty($postal_code) || empty($city)) {
         die("Wszystkie pola muszą być poprawnie uzupełnione.");
     }
 
-    $status = "Pending";
+    $status = "2";
 
-    $query_order = "INSERT INTO zamowienia 
-                    (product_id, imie, nazwisko, email, phone, street, house_number, postal_code, city, 
+    $query_order = "INSERT INTO zamowienia_users 
+                    (user_id, product_id, imie, nazwisko, email, phone, street, house_number, postal_code, city, 
                      amount, price, status, created_at, payment_method_id, delivery_method_id, delivery_cost) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)";
-
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)";
+    
     $stmt_order = $conn->prepare($query_order);
     if (!$stmt_order) {
-        die("Błąd zapytania dodawania zamówienia: " . $conn->error);
+        die("Błąd zapytania przygotowanego: " . $conn->error);
     }
-
+    
     $stmt_order->bind_param(
-        "issssssssiddsid", 
-        $product_id, 
-        $imie, 
-        $nazwisko, 
-        $email, 
-        $phone, 
-        $street, 
-        $house_number, 
-        $postal_code, 
-        $city, 
-        $amount, 
-        $total_price, 
-        $status, 
-        $payment_method_id, 
-        $delivery_method_id, 
+        "iissssssssiddsid", 
+        $user_id,
+        $product_id,
+        $imie,
+        $nazwisko,
+        $email,
+        $phone,
+        $street,
+        $house_number,
+        $postal_code,
+        $city,
+        $amount,
+        $total_price,
+        $status,
+        $payment_method_id,
+        $delivery_method_id,
         $delivery_cost
     );
 
@@ -122,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$stmt_update_quantity->execute()) {
             die("Błąd podczas aktualizacji ilości produktu: " . $stmt_update_quantity->error);
         }
+    
         echo "<!DOCTYPE html>
         <html lang='pl'>
         <head>
@@ -133,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <body>
         <div class='container mt-5'>
             <h1>Zamówienie zostało złożone pomyślnie!</h1>
-            <p>Dziękujemy za zakupy. Twoje zamówienie zostanie przetworzone w najbliższym czasie.</p>
+            <p>Dziękujemy za zakupy. Twoje zamówienie zostało przekazane do realizacji.</p>
             <a href='dashboard.php' class='btn btn-primary mt-3'>Powrót do sklepu</a>
         </div>
         <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'></script>
@@ -177,10 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-primary:hover {
             background-color: #0056b3;
         }
-        .btn-secondary {
-            border: none;
-            padding: 10px 20px;
-        }
         .form-label {
             font-weight: bold;
         }
@@ -192,9 +210,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="dashboard.php">PoopAndYou</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto center-links">
+                <?php
+                $pagesResult = $conn->query("SELECT title, slug FROM pages");
+                while ($page = $pagesResult->fetch_assoc()) {
+                    echo "<li class='nav-item'><a class='nav-link' href='page.php?slug=" . htmlspecialchars($page['slug']) . "'>" . htmlspecialchars($page['title']) . "</a></li>";
+                }
+                ?>
+            </ul>
+            
+            </ul>
+        </div>
     </div>
 </nav>
 
@@ -204,7 +237,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <p>Cena za sztukę: <strong><?= htmlspecialchars($product['price']); ?> zł</strong></p>
     <p>Dostępna ilość: <?= htmlspecialchars($product['quantity']); ?></p>
 
-    <form method="post">
+    <form action="place_order_logged.php?product_id=<?= htmlspecialchars($product_id); ?>" method="post">
+    <input type="hidden" name="status" value="2">
         <div class="mb-3">
             <label for="amount" class="form-label">Ilość:</label>
             <input type="number" id="amount" name="amount" class="form-control" min="1" max="<?= htmlspecialchars($product['quantity']); ?>" required>
@@ -212,35 +246,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div id="total-price">Cena całkowita: <?= htmlspecialchars($product['price']); ?> zł</div>
         <div class="mb-3">
             <label for="imie" class="form-label">Imię:</label>
-            <input type="text" id="imie" name="imie" class="form-control" required>
+            <input type="text" id="imie" name="imie" class="form-control" value="<?= htmlspecialchars($user['imie']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="nazwisko" class="form-label">Nazwisko:</label>
-            <input type="text" id="nazwisko" name="nazwisko" class="form-control" required>
+            <input type="text" id="nazwisko" name="nazwisko" class="form-control" value="<?= htmlspecialchars($user['nazwisko']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email:</label>
-            <input type="email" id="email" name="email" class="form-control" required>
+            <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="phone" class="form-label">Telefon:</label>
-            <input type="text" id="phone" name="phone" class="form-control" required>
+            <input type="text" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($user['phone']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="street" class="form-label">Ulica:</label>
-            <input type="text" id="street" name="street" class="form-control" required>
+            <input type="text" id="street" name="street" class="form-control" value="<?= htmlspecialchars($user['street']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="house_number" class="form-label">Nr domu:</label>
-            <input type="text" id="house_number" name="house_number" class="form-control" required>
+            <input type="text" id="house_number" name="house_number" class="form-control" value="<?= htmlspecialchars($user['house_number']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="postal_code" class="form-label">Kod pocztowy:</label>
-            <input type="text" id="postal_code" name="postal_code" class="form-control" required>
+            <input type="text" id="postal_code" name="postal_code" class="form-control" value="<?= htmlspecialchars($user['postal_code']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="city" class="form-label">Miasto:</label>
-            <input type="text" id="city" name="city" class="form-control" required>
+            <input type="text" id="city" name="city" class="form-control" value="<?= htmlspecialchars($user['city']); ?>" required>
         </div>
         <div class="mb-3">
             <label for="payment_method_id" class="form-label">Metoda płatności:</label>

@@ -2,9 +2,7 @@
 session_start();
 include('db_connection.php');
 
-$isLoggedIn = isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
-
-if (!isset($_GET['product_id']) || !ctype_digit($_GET['product_id'])) {
+if (!isset($_GET['product_id'])) {
     echo "<p>Nieprawidłowy identyfikator produktu.</p>";
     exit;
 }
@@ -82,7 +80,7 @@ $parameters = $result_parameters->fetch_all(MYSQLI_ASSOC);
             margin-top: 20px;
         }
         .btn-order {
-            background-color: #28a745;
+            background-color: #007bff;
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
@@ -92,7 +90,7 @@ $parameters = $result_parameters->fetch_all(MYSQLI_ASSOC);
             margin-bottom: 20px;
         }
         .btn-order:hover {
-            background-color: #218838;
+            background-color: #0056b3;
         }
         .btn-back {
             background-color: #007bff;
@@ -120,38 +118,14 @@ $parameters = $result_parameters->fetch_all(MYSQLI_ASSOC);
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mx-auto center-links">
+            <ul class="navbar-nav mx-auto">
                 <?php
                 $pagesResult = $conn->query("SELECT title, slug FROM pages");
                 while ($page = $pagesResult->fetch_assoc()) {
                     echo "<li class='nav-item'><a class='nav-link' href='page.php?slug=" . htmlspecialchars($page['slug']) . "'>" . htmlspecialchars($page['title']) . "</a></li>";
                 }
                 ?>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="cart.php">
-                        <i class="fas fa-shopping-cart"></i> Koszyk
-                    </a>
-                </li>
-                <?php if ($isLoggedIn): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="ulubione.php">
-                            <i class="fas fa-heart"></i> Ulubione
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="user_edit.php">Profil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-danger logout-btn" href="logout.php">Wyloguj się</a>
-                    </li>
-                <?php else: ?>
-                    <li class="nav-item">
-                        <a class="btn btn-primary" href="index.html">Zaloguj się</a>
-                    </li>
-                <?php endif; ?>
-            </ul>
+            
         </div>
     </div>
 </nav>
@@ -183,10 +157,10 @@ $parameters = $result_parameters->fetch_all(MYSQLI_ASSOC);
                     <h2><?= htmlspecialchars($product['name']); ?></h2>
                     <h3>Cena: <?= htmlspecialchars($product['price']); ?> zł</h3>
                     <h4>Dostępna ilość: <?= htmlspecialchars($product['quantity']); ?></h4>
-                    <form action="place_order_logged.php" method="get">
-            <input type="hidden" name="product_id" value="<?= htmlspecialchars($product_id); ?>">
-            <button type="submit" class="btn-order">Złóż zamówienie</button>
-        </form>
+                    <form action="place_order.php" method="get">
+                        <input type="hidden" name="product_id" value="<?= htmlspecialchars($product_id); ?>">
+                        <button type="submit" class="btn-order">Złóż zamówienie</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -208,6 +182,7 @@ $parameters = $result_parameters->fetch_all(MYSQLI_ASSOC);
                 <?php endforeach; ?>
             </ul>
         </div>
+
     </div>
 </div>
 
