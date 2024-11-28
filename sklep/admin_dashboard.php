@@ -256,67 +256,69 @@ include('db_connection.php');
     <div class="card">
         <div class="card-header">Zarządzaj Zamówieniami Zalogowanych</div>
         <div class="card-body">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Product ID</th>
-                        <th>User ID</th>
-                        <th>Imię</th>
-                        <th>Nazwisko</th>
-                        <th>Email</th>
-                        <th>Telefon</th>
-                        <th>Ulica</th>
-                        <th>Nr domu</th>
-                        <th>Kod pocztowy</th>
-                        <th>Miasto</th>
-                        <th>Ilość</th>
-                        <th>Cena</th>
-                        <th>Status</th>
-                        <th>Utworzono</th>
-                        <th>Zamknięto</th>
-                        <th>Płatność</th>
-                        <th>Dostawa</th>
-                        <th>Koszt Dostawy</th>
-                        <th>Akcje</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $result = $conn->query("SELECT * FROM zamowienia_users");
-                    while ($order = $result->fetch_assoc()) {
-                        echo "<tr>
-                            <td>{$order['id']}</td>
-                            <td>{$order['product_id']}</td>
-                            <td>{$order['user_id']}</td>
-                            <td>{$order['imie']}</td>
-                            <td>{$order['nazwisko']}</td>
-                            <td>{$order['email']}</td>
-                            <td>{$order['phone']}</td>
-                            <td>{$order['street']}</td>
-                            <td>{$order['house_number']}</td>
-                            <td>{$order['postal_code']}</td>
-                            <td>{$order['city']}</td>
-                            <td>{$order['amount']}</td>
-                            <td>{$order['price']} PLN</td>
-                            <td>{$order['status']}</td>
-                            <td>{$order['created_at']}</td>
-                            <td>{$order['closed_at']}</td>
-                            <td>{$order['payment_method_id']}</td>
-                            <td>{$order['delivery_method_id']}</td>
-                            <td>{$order['delivery_cost']} PLN</td>
-                            <td>
-                                <a href='edit_order_logged.php?id={$order['id']}' class='btn btn-edit btn-action'>Edytuj</a>
-                                <form action='delete_order_logged.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
-                                    <input type='hidden' name='id' value='{$order['id']}'>
-                                    <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
-                                </form>
-                            </td>
-                        </tr>";
-                    }
-                    ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product ID</th>
+                            <th>User ID</th>
+                            <th>Imię</th>
+                            <th>Nazwisko</th>
+                            <th>Email</th>
+                            <th>Telefon</th>
+                            <th>Ulica</th>
+                            <th>Nr domu</th>
+                            <th>Kod pocztowy</th>
+                            <th>Miasto</th>
+                            <th>Ilość</th>
+                            <th>Cena</th>
+                            <th>Status</th>
+                            <th>Utworzono</th>
+                            <th>Zamknięto</th>
+                            <th>Płatność</th>
+                            <th>Dostawa</th>
+                            <th>Koszt Dostawy</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $result = $conn->query("SELECT * FROM zamowienia_users");
+                        while ($order = $result->fetch_assoc()) {
+                            echo "<tr>
+                                <td>{$order['id']}</td>
+                                <td>{$order['product_id']}</td>
+                                <td>{$order['user_id']}</td>
+                                <td>{$order['imie']}</td>
+                                <td>{$order['nazwisko']}</td>
+                                <td>{$order['email']}</td>
+                                <td>{$order['phone']}</td>
+                                <td>{$order['street']}</td>
+                                <td>{$order['house_number']}</td>
+                                <td>{$order['postal_code']}</td>
+                                <td>{$order['city']}</td>
+                                <td>{$order['amount']}</td>
+                                <td>{$order['price']} PLN</td>
+                                <td>{$order['status']}</td>
+                                <td>{$order['created_at']}</td>
+                                <td>{$order['closed_at']}</td>
+                                <td>{$order['payment_method_id']}</td>
+                                <td>{$order['delivery_method_id']}</td>
+                                <td>{$order['delivery_cost']} PLN</td>
+                                <td>
+                                    <a href='edit_order_logged.php?id={$order['id']}' class='btn btn-edit btn-action'>Edytuj</a>
+                                    <form action='delete_order_logged.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
+                                        <input type='hidden' name='id' value='{$order['id']}'>
+                                        <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
+                                    </form>
+                                </td>
+                            </tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </section>
@@ -325,65 +327,67 @@ include('db_connection.php');
     <div class="card">
         <div class="card-header">Zarządzaj Zamówieniami Niezalogowanych</div>
         <div class="card-body">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Product ID</th>
-                        <th>Imię</th>
-                        <th>Nazwisko</th>
-                        <th>Email</th>
-                        <th>Telefon</th>
-                        <th>Ulica</th>
-                        <th>Nr domu</th>
-                        <th>Kod pocztowy</th>
-                        <th>Miasto</th>
-                        <th>Ilość</th>
-                        <th>Cena</th>
-                        <th>Status</th>
-                        <th>Utworzono</th>
-                        <th>Zamknięto</th>
-                        <th>Płatność</th>
-                        <th>Dostawa</th>
-                        <th>Koszt Dostawy</th>
-                        <th>Akcje</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $result = $conn->query("SELECT * FROM zamowienia");
-                    while ($order = $result->fetch_assoc()) {
-                        echo "<tr>
-                            <td>{$order['id']}</td>
-                            <td>{$order['product_id']}</td>
-                            <td>{$order['imie']}</td>
-                            <td>{$order['nazwisko']}</td>
-                            <td>{$order['email']}</td>
-                            <td>{$order['phone']}</td>
-                            <td>{$order['street']}</td>
-                            <td>{$order['house_number']}</td>
-                            <td>{$order['postal_code']}</td>
-                            <td>{$order['city']}</td>
-                            <td>{$order['amount']}</td>
-                            <td>{$order['price']} PLN</td>
-                            <td>{$order['status']}</td>
-                            <td>{$order['created_at']}</td>
-                            <td>{$order['closed_at']}</td>
-                            <td>{$order['payment_method_id']}</td>
-                            <td>{$order['delivery_method_id']}</td>
-                            <td>{$order['delivery_cost']} PLN</td>
-                            <td>
-                                <a href='edit_order.php?id={$order['id']}' class='btn btn-edit btn-action'>Edytuj</a>
-                                <form action='delete_order.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
-                                    <input type='hidden' name='id' value='{$order['id']}'>
-                                    <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
-                                </form>
-                            </td>
-                        </tr>";
-                    }
-                    ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product ID</th>
+                            <th>Imię</th>
+                            <th>Nazwisko</th>
+                            <th>Email</th>
+                            <th>Telefon</th>
+                            <th>Ulica</th>
+                            <th>Nr domu</th>
+                            <th>Kod pocztowy</th>
+                            <th>Miasto</th>
+                            <th>Ilość</th>
+                            <th>Cena</th>
+                            <th>Status</th>
+                            <th>Utworzono</th>
+                            <th>Zamknięto</th>
+                            <th>Płatność</th>
+                            <th>Dostawa</th>
+                            <th>Koszt Dostawy</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $result = $conn->query("SELECT * FROM zamowienia");
+                        while ($order = $result->fetch_assoc()) {
+                            echo "<tr>
+                                <td>{$order['id']}</td>
+                                <td>{$order['product_id']}</td>
+                                <td>{$order['imie']}</td>
+                                <td>{$order['nazwisko']}</td>
+                                <td>{$order['email']}</td>
+                                <td>{$order['phone']}</td>
+                                <td>{$order['street']}</td>
+                                <td>{$order['house_number']}</td>
+                                <td>{$order['postal_code']}</td>
+                                <td>{$order['city']}</td>
+                                <td>{$order['amount']}</td>
+                                <td>{$order['price']} PLN</td>
+                                <td>{$order['status']}</td>
+                                <td>{$order['created_at']}</td>
+                                <td>{$order['closed_at']}</td>
+                                <td>{$order['payment_method_id']}</td>
+                                <td>{$order['delivery_method_id']}</td>
+                                <td>{$order['delivery_cost']} PLN</td>
+                                <td>
+                                    <a href='edit_order.php?id={$order['id']}' class='btn btn-edit btn-action'>Edytuj</a>
+                                    <form action='delete_order.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
+                                        <input type='hidden' name='id' value='{$order['id']}'>
+                                        <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
+                                    </form>
+                                </td>
+                            </tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </section>

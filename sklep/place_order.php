@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Wszystkie pola muszą być poprawnie uzupełnione.");
     }
 
-    $status = "Pending";
+    $status = "2";
 
     $query_order = "INSERT INTO zamowienia 
                     (product_id, imie, nazwisko, email, phone, street, house_number, postal_code, city, 

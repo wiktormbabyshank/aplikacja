@@ -93,12 +93,12 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">PoopAndYou</a>
+        <a class="navbar-brand" href="dashboard.php">PoopAndYou</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mx-auto center-links">
+            <ul class="navbar-nav mx-auto">
                 <?php
                 $pagesResult = $conn->query("SELECT title, slug FROM pages");
                 while ($page = $pagesResult->fetch_assoc()) {
@@ -107,6 +107,11 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['search'])) {
                 ?>
             </ul>
             <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="zamowienia.php">
+                        <i class="fas fa-box"></i> Zamówienia
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="cart.php">
                         <i class="fas fa-shopping-cart"></i> Koszyk
