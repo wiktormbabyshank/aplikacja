@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $stmt->close();
 
-    header("Location: admin_dashboard.php#delivery_methods");
+    header("Location: admin_dashboard_delivery.php");
     exit();
 }
 ?>
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <textarea class="form-control" id="description" name="description" rows="5"><?php echo htmlspecialchars($method['description']); ?></textarea>
         </div>
         <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
-        <a href="admin_dashboard.php#delivery_methods" class="btn btn-secondary">Anuluj</a>
+        <a href="admin_dashboard_delivery.php" class="btn btn-secondary">Anuluj</a>
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

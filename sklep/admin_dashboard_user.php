@@ -126,41 +126,35 @@ include('db_connection.php');
         <a href="admin_dashboard_payment.php" class="nav-link-btn">Zarządzaj Sposobami Płatności</a>
     </div>
 
-    <section id="products" class="admin-section">
+    
+
+    <section id="users" class="admin-section">
         <div class="card">
-            <div class="card-header">Zarządzaj Produktami</div>
+            <div class="card-header">Zarządzaj Użytkownikami</div>
             <div class="card-body">
-                <a href="add_product.php" class="btn btn-add">Dodaj Nowy Produkt</a>
-                <table class="table table-bordered table-hover mt-3">
+                <table class="table table-bordered table-hover">
                     <thead>
                         <tr>
-                            <th>Nazwa</th>
-                            <th>Cena</th>
-                            <th>Ilość</th>
-                            <th>Obrazy</th>
+                            <th>Imię</th>
+                            <th>Nazwisko</th>
+                            <th>Email</th>
+                            <th>Status</th>
                             <th>Akcje</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                        $result = $conn->query("SELECT * FROM products");
-                        while ($row = $result->fetch_assoc()) {
-                            $productId = $row['id'];
-                            $imageResult = $conn->query("SELECT image_path FROM product_images WHERE product_id = $productId");
-                            $images = [];
-                            while ($imageRow = $imageResult->fetch_assoc()) {
-                                $images[] = htmlspecialchars($imageRow['image_path']);
-                            }
-                            $imageHtml = empty($images) ? 'Brak obrazów' : implode(' ', array_map(fn($path) => "<img src='$path' style='width: 50px; height: auto;'>", $images));
+                        $result = $conn->query("SELECT * FROM uzytkownicy");
+                        while ($user = $result->fetch_assoc()) {
                             echo "<tr>
-                                <td>{$row['name']}</td>
-                                <td>{$row['price']} PLN</td>
-                                <td>{$row['quantity']}</td>
-                                <td>$imageHtml</td>
+                                <td>{$user['imie']}</td>
+                                <td>{$user['nazwisko']}</td>
+                                <td>{$user['email']}</td>
+                                <td>{$user['status']}</td>
                                 <td>
-                                    <a href='edit_product.php?id={$row['id']}' class='btn btn-edit btn-action'>Edytuj</a>
-                                    <form action='delete_product.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
-                                        <input type='hidden' name='id' value='{$row['id']}'>
+                                    <a href='edit_user.php?id={$user['id']}' class='btn btn-edit btn-action'>Edytuj</a>
+                                    <form action='delete_user.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
+                                        <input type='hidden' name='id' value='{$user['id']}'>
                                         <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
                                     </form>
                                 </td>

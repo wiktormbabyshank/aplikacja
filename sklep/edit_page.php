@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $stmt->close();
 
-    header("Location: admin_dashboard.php#pages");
+    header("Location: admin_dashboard_pages.php");
     exit();
 }
 ?>
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <textarea class="form-control" id="content" name="content" rows="10" required><?php echo htmlspecialchars($page['content']); ?></textarea>
         </div>
         <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
-        <a href="admin_dashboard.php#pages" class="btn btn-secondary">Anuluj</a>
+        <a href="admin_dashboard_pages.php" class="btn btn-secondary">Anuluj</a>
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -22,13 +22,24 @@ if ($result->num_rows == 0) {
 $user = $result->fetch_assoc();
 
 $orders_query = "
-    SELECT * FROM zamowienia_users
-    WHERE user_id = ?
-    ORDER BY 
-        CASE 
-            WHEN status = 'w realizacji' THEN created_at
-            WHEN status = 'zrealizowane' THEN closed_at
-        END DESC
+    SELECT 
+        og.id AS group_id, 
+        og.delivery_method_id, 
+        og.payment_method_id, 
+        og.delivery_cost, 
+        zu.id AS order_id, 
+        zu.product_id, 
+        zu.amount, 
+        zu.price, 
+        zu.status, 
+        zu.created_at, 
+        zu.closed_at,
+        p.name AS product_name
+    FROM order_group og
+    LEFT JOIN zamowienia_users zu ON zu.order_group_id = og.id
+    LEFT JOIN products p ON zu.product_id = p.id
+    WHERE zu.user_id = ?
+    ORDER BY zu.status, og.id DESC, zu.created_at DESC
 ";
 $orders_stmt = $conn->prepare($orders_query);
 $orders_stmt->bind_param("i", $user_id);
@@ -38,11 +49,22 @@ $orders_result = $orders_stmt->get_result();
 $pending_orders = [];
 $completed_orders = [];
 
-while ($order = $orders_result->fetch_assoc()) {
-    if ($order['status'] === 'w realizacji') {
-        $pending_orders[] = $order;
-    } elseif ($order['status'] === 'zrealizowane') {
-        $completed_orders[] = $order;
+while ($row = $orders_result->fetch_assoc()) {
+    $group_id = $row['group_id'];
+    if ($row['status'] === 'w realizacji') {
+        $pending_orders[$group_id]['group_details'] = [
+            'delivery_method_id' => $row['delivery_method_id'],
+            'payment_method_id' => $row['payment_method_id'],
+            'delivery_cost' => $row['delivery_cost'],
+        ];
+        $pending_orders[$group_id]['orders'][] = $row;
+    } elseif ($row['status'] === 'zrealizowane') {
+        $completed_orders[$group_id]['group_details'] = [
+            'delivery_method_id' => $row['delivery_method_id'],
+            'payment_method_id' => $row['payment_method_id'],
+            'delivery_cost' => $row['delivery_cost'],
+        ];
+        $completed_orders[$group_id]['orders'][] = $row;
     }
 }
 ?>
@@ -62,49 +84,34 @@ while ($order = $orders_result->fetch_assoc()) {
         .navbar-brand {
             font-weight: bold;
         }
-        .edit-card {
+        .edit-card, .order-group {
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
         }
-        .btn-save {
-            background-color: #28a745;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-        }
-        .btn-save:hover {
-            background-color: #218838;
-        }
-        .btn-back {
-            background-color: #6c757d;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-        }
-        .btn-back:hover {
-            background-color: #5a6268;
-        }
-        .orders-section {
-            margin-top: 50px;
-        }
-        .order-card {
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+        .order-group {
+            margin-bottom: 20px;
             padding: 15px;
-            background-color: white;
+            background: white;
         }
         .order-title {
-            font-size: 1.1rem;
             font-weight: bold;
         }
         .order-status {
             font-weight: bold;
         }
+        .order-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .order-item:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="dashboard.php">PoopAndYou</a>
@@ -142,106 +149,91 @@ while ($order = $orders_result->fetch_assoc()) {
     </div>
 </nav>
 
-    <div class="container">
-        <h1 class="text-center mb-4">Edytuj swoje dane</h1>
-        <div class="card edit-card p-4">
-            <form action="user_edit.php" method="post">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="imie" class="form-label">Imię:</label>
-                        <input type="text" id="imie" name="imie" class="form-control" value="<?php echo htmlspecialchars($user['imie']); ?>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="nazwisko" class="form-label">Nazwisko:</label>
-                        <input type="text" id="nazwisko" name="nazwisko" class="form-control" value="<?php echo htmlspecialchars($user['nazwisko']); ?>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="email" class="form-label">Email:</label>
-                        <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="phone" class="form-label">Telefon:</label>
-                        <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone']); ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="city" class="form-label">Miasto:</label>
-                        <input type="text" id="city" name="city" class="form-control" value="<?php echo htmlspecialchars($user['city']); ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="street" class="form-label">Ulica:</label>
-                        <input type="text" id="street" name="street" class="form-control" value="<?php echo htmlspecialchars($user['street']); ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="house_number" class="form-label">Numer Domu:</label>
-                        <input type="number" id="house_number" name="house_number" class="form-control" value="<?php echo htmlspecialchars($user['house_number']); ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="postal_code" class="form-label">Kod pocztowy:</label>
-                        <input type="text" id="postal_code" name="postal_code" class="form-control" value="<?php echo htmlspecialchars($user['postal_code']); ?>">
-                    </div>
+<div class="container">
+    <h1 class="text-center mb-4">Edytuj swoje dane</h1>
+    <div class="card edit-card p-4 mb-5">
+        <form action="user_edit.php" method="post">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="imie" class="form-label">Imię:</label>
+                    <input type="text" id="imie" name="imie" class="form-control" value="<?= htmlspecialchars($user['imie']); ?>" required>
                 </div>
-                <button type="submit" name="submit" class="btn btn-save mt-3">Zapisz zmiany</button>
-            </form>
-            <a href="dashboard.php" class="btn btn-back mt-3">Powrót do sklepu</a>
-        </div>
-
-        <div class="orders-section row mt-5">
-            <div class="col-md-6">
-                <h3 class="text-center mb-4">Zamówienia w realizacji</h3>
-                <?php if (!empty($pending_orders)): ?>
-                    <?php foreach ($pending_orders as $order): ?>
-                        <div class="order-card mb-3">
-                            <div class="order-title">ID Zamówienia: <?= $order['id'] ?></div>
-                            <div>Data utworzenia: <?= $order['created_at'] ?></div>
-                            <div>Status: <span class="order-status text-warning">W realizacji</span></div>
-                            <div>Kwota: <?= number_format($order['price'], 2) ?> zł</div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p class="text-center text-muted">Brak zamówień w realizacji.</p>
-                <?php endif; ?>
+                <div class="col-md-6">
+                    <label for="nazwisko" class="form-label">Nazwisko:</label>
+                    <input type="text" id="nazwisko" name="nazwisko" class="form-control" value="<?= htmlspecialchars($user['nazwisko']); ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email:</label>
+                    <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']); ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">Telefon:</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($user['phone']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label for="city" class="form-label">Miasto:</label>
+                    <input type="text" id="city" name="city" class="form-control" value="<?= htmlspecialchars($user['city']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label for="street" class="form-label">Ulica:</label>
+                    <input type="text" id="street" name="street" class="form-control" value="<?= htmlspecialchars($user['street']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label for="house_number" class="form-label">Numer Domu:</label>
+                    <input type="number" id="house_number" name="house_number" class="form-control" value="<?= htmlspecialchars($user['house_number']); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label for="postal_code" class="form-label">Kod pocztowy:</label>
+                    <input type="text" id="postal_code" name="postal_code" class="form-control" value="<?= htmlspecialchars($user['postal_code']); ?>">
+                </div>
             </div>
-
-            <div class="col-md-6">
-                <h3 class="text-center mb-4">Zrealizowane zamówienia</h3>
-                <?php if (!empty($completed_orders)): ?>
-                    <?php foreach ($completed_orders as $order): ?>
-                        <div class="order-card mb-3">
-                            <div class="order-title">ID Zamówienia: <?= $order['id'] ?></div>
-                            <div>Data zamknięcia: <?= $order['closed_at'] ?></div>
-                            <div>Status: <span class="order-status text-success">Zrealizowane</span></div>
-                            <div>Kwota: <?= number_format($order['price'], 2) ?> zł</div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p class="text-center text-muted">Brak zrealizowanych zamówień.</p>
-                <?php endif; ?>
-            </div>
-        </div>
+            <button type="submit" name="submit" class="btn btn-success mt-3">Zapisz zmiany</button>
+        </form>
     </div>
 
-    <?php
-    if (isset($_POST['submit'])) {
-        $imie = $_POST['imie'];
-        $nazwisko = $_POST['nazwisko'];
-        $email = $_POST['email'];
-        $miasto = $_POST['city'];
-        $telefon = $_POST['phone'];
-        $ulica = $_POST['street'];
-        $numer_domu = $_POST['house_number'];
-        $kod_pocztowy = $_POST['postal_code'];
+    <div class="row">
+        <div class="col-md-6">
+            <h3 class="text-center mb-4">Zamówienia w realizacji</h3>
+            <?php foreach ($pending_orders as $group_id => $group): ?>
+                <div class="order-group">
+                    <h4>Grupa Zamówień ID: <?= $group_id; ?></h4>
+                    <p>Metoda dostawy: <?= htmlspecialchars($group['group_details']['delivery_method_id']); ?></p>
+                    <p>Koszt dostawy: <?= number_format($group['group_details']['delivery_cost'], 2); ?> zł</p>
+                    <?php foreach ($group['orders'] as $order): ?>
+                        <div class="order-item">
+                            <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']); ?></p>
+                            <p><strong>Ilość:</strong> <?= $order['amount']; ?></p>
+                            <p><strong>Cena:</strong> <?= number_format($order['price'], 2); ?> zł</p>
+                            <p><strong>Status:</strong> <?= htmlspecialchars($order['status']); ?></p>
+                            <p><strong>Data utworzenia:</strong> <?= htmlspecialchars($order['created_at']); ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
-        $update_query = "UPDATE uzytkownicy SET imie = ?, nazwisko = ?, email = ?, city = ?, phone = ?, street = ?, house_number = ?, postal_code = ? WHERE id = ?";
-        $update_stmt = $conn->prepare($update_query);
-        $update_stmt->bind_param("ssssssisi", $imie, $nazwisko, $email, $miasto, $telefon, $ulica, $numer_domu, $kod_pocztowy, $user_id);
-        if ($update_stmt->execute()) {
-            echo "<div class='alert alert-success text-center mt-3'>Dane zostały zaktualizowane pomyślnie.</div>";
-        } else {
-            echo "<div class='alert alert-danger text-center mt-3'>Wystąpił błąd przy aktualizacji danych.</div>";
-        }
-    }
-    ?>
+        <div class="col-md-6">
+            <h3 class="text-center mb-4">Zrealizowane zamówienia</h3>
+            <?php foreach ($completed_orders as $group_id => $group): ?>
+                <div class="order-group">
+                    <h4>Grupa Zamówień ID: <?= $group_id; ?></h4>
+                    <p>Metoda dostawy: <?= htmlspecialchars($group['group_details']['delivery_method_id']); ?></p>
+                    <p>Koszt dostawy: <?= number_format($group['group_details']['delivery_cost'], 2); ?> zł</p>
+                    <?php foreach ($group['orders'] as $order): ?>
+                        <div class="order-item">
+                            <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']); ?></p>
+                            <p><strong>Ilość:</strong> <?= $order['amount']; ?></p>
+                            <p><strong>Cena:</strong> <?= number_format($order['price'], 2); ?> zł</p>
+                            <p><strong>Status:</strong> <?= htmlspecialchars($order['status']); ?></p>
+                            <p><strong>Data zamknięcia:</strong> <?= htmlspecialchars($order['closed_at']); ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

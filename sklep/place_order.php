@@ -74,20 +74,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Wszystkie pola muszą być poprawnie uzupełnione.");
     }
 
-    $status = "2";
+    $query_order_group = "INSERT INTO order_group (delivery_method_id, payment_method_id, delivery_cost) VALUES (?, ?, ?)";
+    $stmt_order_group = $conn->prepare($query_order_group);
+    if (!$stmt_order_group) {
+        die("Błąd zapytania dodawania grupy zamówienia: " . $conn->error);
+    }
+    $stmt_order_group->bind_param("iid", $delivery_method_id, $payment_method_id, $delivery_cost);
+
+    if (!$stmt_order_group->execute()) {
+        die("Błąd podczas tworzenia grupy zamówienia: " . $stmt_order_group->error);
+    }
+    $order_group_id = $stmt_order_group->insert_id;
+    $stmt_order_group->close();
 
     $query_order = "INSERT INTO zamowienia 
                     (product_id, imie, nazwisko, email, phone, street, house_number, postal_code, city, 
-                     amount, price, status, created_at, payment_method_id, delivery_method_id, delivery_cost) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)";
-
+                     amount, price, status, created_at, order_group_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
     $stmt_order = $conn->prepare($query_order);
     if (!$stmt_order) {
         die("Błąd zapytania dodawania zamówienia: " . $conn->error);
     }
 
+    $status = "2"; 
     $stmt_order->bind_param(
-        "issssssssiddsid", 
+        "issssssssiddi", 
         $product_id, 
         $imie, 
         $nazwisko, 
@@ -100,9 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $amount, 
         $total_price, 
         $status, 
-        $payment_method_id, 
-        $delivery_method_id, 
-        $delivery_cost
+        $order_group_id
     );
 
     if ($stmt_order->execute()) {
@@ -122,23 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$stmt_update_quantity->execute()) {
             die("Błąd podczas aktualizacji ilości produktu: " . $stmt_update_quantity->error);
         }
-        echo "<!DOCTYPE html>
-        <html lang='pl'>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
-            <title>Zamówienie złożone</title>
-        </head>
-        <body>
-        <div class='container mt-5'>
-            <h1>Zamówienie zostało złożone pomyślnie!</h1>
-            <p>Dziękujemy za zakupy. Twoje zamówienie zostanie przetworzone w najbliższym czasie.</p>
-            <a href='dashboard.php' class='btn btn-primary mt-3'>Powrót do sklepu</a>
-        </div>
-        <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'></script>
-        </body>
-        </html>";
+
+        header("Location: order_confirmation.php?order_group_id=$order_group_id");
         exit;
     } else {
         die("Błąd podczas składania zamówienia: " . $stmt_order->error);
@@ -176,10 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .btn-primary:hover {
             background-color: #0056b3;
-        }
-        .btn-secondary {
-            border: none;
-            padding: 10px 20px;
         }
         .form-label {
             font-weight: bold;

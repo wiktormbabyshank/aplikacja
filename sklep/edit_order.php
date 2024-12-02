@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id']) && ctype_digit($_
     $stmt->bind_param("ssi", $status, $closed_at, $orderId);
 
     if ($stmt->execute()) {
-        header("Location: admin_dashboard.php#orders");
+        header("Location: admin_dashboard_unlogged.php");
         exit;
     } else {
         die("Błąd podczas aktualizacji zamówienia: " . $conn->error);
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id']) && ctype_digit($_
             <input type="datetime-local" id="closed_at" name="closed_at" class="form-control" value="<?= htmlspecialchars($order['closed_at']); ?>">
         </div>
         <button type="submit" class="btn btn-primary">Zapisz Zmiany</button>
-        <a href="admin_dashboard.php#orders" class="btn btn-secondary">Anuluj</a>
+        <a href="admin_dashboard_unlogged.php" class="btn btn-secondary">Anuluj</a>
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

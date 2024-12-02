@@ -2,29 +2,34 @@
 session_start();
 include('db_connection.php');
 
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: index.html");
-    exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $cart_id = $_POST['cart_id'] ?? null;
+
+    error_log("Dane przesłane do remove_from_cart.php: " . print_r($_POST, true));
+
+    if ($cart_id === null) {
+        echo json_encode(['success' => false, 'message' => 'Brak danych o produkcie do usunięcia.']);
+        exit;
+    }
+
+    $isLoggedIn = isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
+
+    if ($isLoggedIn) {
+        $stmt = $conn->prepare("DELETE FROM koszyk WHERE id = ?");
+        $stmt->bind_param('i', $cart_id);
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Błąd podczas usuwania produktu z koszyka.']);
+        }
+        $stmt->close();
+    } else {
+        if (isset($_SESSION['cart'][$cart_id])) {
+            unset($_SESSION['cart'][$cart_id]);
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => "Produkt z kluczem $cart_id nie istnieje w koszyku."]);
+        }
+    }
 }
-
-$user_id = $_SESSION['id'];
-$cart_id = $_POST['cart_id'] ?? null;
-
-if (!$cart_id) {
-    header("Location: cart.php");
-    exit;
-}
-
-$query = "DELETE FROM koszyk WHERE id = ? AND user_id = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param('ii', $cart_id, $user_id);
-
-if ($stmt->execute()) {
-    header("Location: cart.php");
-} else {
-    echo "Błąd usuwania przedmiotu z koszyka.";
-}
-
-$stmt->close();
-$conn->close();
 ?>

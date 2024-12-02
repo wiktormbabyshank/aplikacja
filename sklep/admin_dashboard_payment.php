@@ -126,54 +126,44 @@ include('db_connection.php');
         <a href="admin_dashboard_payment.php" class="nav-link-btn">Zarządzaj Sposobami Płatności</a>
     </div>
 
-    <section id="products" class="admin-section">
-        <div class="card">
-            <div class="card-header">Zarządzaj Produktami</div>
-            <div class="card-body">
-                <a href="add_product.php" class="btn btn-add">Dodaj Nowy Produkt</a>
-                <table class="table table-bordered table-hover mt-3">
-                    <thead>
-                        <tr>
-                            <th>Nazwa</th>
-                            <th>Cena</th>
-                            <th>Ilość</th>
-                            <th>Obrazy</th>
-                            <th>Akcje</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $result = $conn->query("SELECT * FROM products");
-                        while ($row = $result->fetch_assoc()) {
-                            $productId = $row['id'];
-                            $imageResult = $conn->query("SELECT image_path FROM product_images WHERE product_id = $productId");
-                            $images = [];
-                            while ($imageRow = $imageResult->fetch_assoc()) {
-                                $images[] = htmlspecialchars($imageRow['image_path']);
-                            }
-                            $imageHtml = empty($images) ? 'Brak obrazów' : implode(' ', array_map(fn($path) => "<img src='$path' style='width: 50px; height: auto;'>", $images));
-                            echo "<tr>
-                                <td>{$row['name']}</td>
-                                <td>{$row['price']} PLN</td>
-                                <td>{$row['quantity']}</td>
-                                <td>$imageHtml</td>
-                                <td>
-                                    <a href='edit_product.php?id={$row['id']}' class='btn btn-edit btn-action'>Edytuj</a>
-                                    <form action='delete_product.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
-                                        <input type='hidden' name='id' value='{$row['id']}'>
-                                        <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
-                                    </form>
-                                </td>
-                            </tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
     
+<section id="payments" class="admin-section">
+    <div class="card">
+        <div class="card-header">Zarządzaj Sposobami Płatności</div>
+        <div class="card-body">
+            <a href="add_payment_method.php" class="btn btn-add">Dodaj Nowy Sposób Płatności</a>
+            <table class="table table-bordered table-hover mt-3">
+                <thead>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Opis</th>
+                        <th>Data Utworzenia</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $result = $conn->query("SELECT * FROM payment_methods");
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<tr>
+                            <td>" . htmlspecialchars($row['name']) . "</td>
+                            <td>" . htmlspecialchars($row['description']) . "</td>
+                            <td>" . htmlspecialchars($row['created_at']) . "</td>
+                            <td>
+                                <a href='edit_payment_method.php?id={$row['id']}' class='btn btn-edit btn-action'>Edytuj</a>
+                                <form action='delete_payment_method.php' method='post' style='display: inline;' onsubmit='return confirmDelete();'>
+                                    <input type='hidden' name='id' value='{$row['id']}'>
+                                    <button type='submit' class='btn btn-delete btn-action'>Usuń</button>
+                                </form>
+                            </td>
+                        </tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
 </div>
 

@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id']) && ctype_digit($_
     $stmt->bind_param("ssi", $name, $description, $categoryId);
 
     if ($stmt->execute()) {
-        header("Location: admin_dashboard.php#categories");
+        header("Location: admin_dashboard_kat.php");
         exit;
     } else {
         die("Błąd podczas aktualizacji kategorii: " . $conn->error);
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id']) && ctype_digit($_
             <textarea id="description" name="description" class="form-control"><?= htmlspecialchars($category['description']); ?></textarea>
         </div>
         <button type="submit" class="btn btn-primary">Zapisz Zmiany</button>
-        <a href="admin_dashboard.php#categories" class="btn btn-secondary">Anuluj</a>
+        <a href="admin_dashboard_kat.php" class="btn btn-secondary">Anuluj</a>
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

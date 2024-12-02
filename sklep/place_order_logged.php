@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 include('db_connection.php');
 
@@ -94,20 +94,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Wszystkie pola muszą być poprawnie uzupełnione.");
     }
 
-    $status = "2";
+    $query_order_group = "INSERT INTO order_group (delivery_method_id, payment_method_id, delivery_cost) VALUES (?, ?, ?)";
+    $stmt_order_group = $conn->prepare($query_order_group);
+    if (!$stmt_order_group) {
+        die("Błąd zapytania do tabeli order_group: " . $conn->error);
+    }
+    $stmt_order_group->bind_param("iid", $delivery_method_id, $payment_method_id, $delivery_cost);
+    if (!$stmt_order_group->execute()) {
+        die("Błąd podczas tworzenia grupy zamówień: " . $stmt_order_group->error);
+    }
+    $order_group_id = $stmt_order_group->insert_id;
 
+    $status = "2";
     $query_order = "INSERT INTO zamowienia_users 
                     (user_id, product_id, imie, nazwisko, email, phone, street, house_number, postal_code, city, 
-                     amount, price, status, created_at, payment_method_id, delivery_method_id, delivery_cost) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)";
+                     amount, price, status, created_at, order_group_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
     
     $stmt_order = $conn->prepare($query_order);
     if (!$stmt_order) {
-        die("Błąd zapytania przygotowanego: " . $conn->error);
+        die("Błąd zapytania do tabeli zamowienia_users: " . $conn->error);
     }
     
     $stmt_order->bind_param(
-        "iissssssssiddsid", 
+        "iissssssssiddi", 
         $user_id,
         $product_id,
         $imie,
@@ -121,53 +131,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $amount,
         $total_price,
         $status,
-        $payment_method_id,
-        $delivery_method_id,
-        $delivery_cost
+        $order_group_id
     );
 
     if ($stmt_order->execute()) {
         $new_quantity = $product['quantity'] - $amount;
-    
         if ($new_quantity < 0) {
             die("Nie można złożyć zamówienia, ponieważ ilość zamawianych produktów przekracza dostępny stan magazynowy.");
         }
-    
         $query_update_quantity = "UPDATE products SET quantity = ? WHERE id = ?";
         $stmt_update_quantity = $conn->prepare($query_update_quantity);
         if (!$stmt_update_quantity) {
             die("Błąd zapytania aktualizacji ilości: " . $conn->error);
         }
-    
         $stmt_update_quantity->bind_param("ii", $new_quantity, $product_id);
         if (!$stmt_update_quantity->execute()) {
             die("Błąd podczas aktualizacji ilości produktu: " . $stmt_update_quantity->error);
         }
-    
-        echo "<!DOCTYPE html>
-        <html lang='pl'>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
-            <title>Zamówienie złożone</title>
-        </head>
-        <body>
-        <div class='container mt-5'>
-            <h1>Zamówienie zostało złożone pomyślnie!</h1>
-            <p>Dziękujemy za zakupy. Twoje zamówienie zostało przekazane do realizacji.</p>
-            <a href='dashboard.php' class='btn btn-primary mt-3'>Powrót do sklepu</a>
-        </div>
-        <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'></script>
-        </body>
-        </html>";
+
+        header("Location: order_confirmation.php?order_group_id=$order_group_id");
         exit;
     } else {
         die("Błąd podczas składania zamówienia: " . $stmt_order->error);
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>

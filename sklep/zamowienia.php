@@ -2,18 +2,15 @@
 session_start();
 include('db_connection.php');
 
-// Inicjalizacja zmiennych
-$orderDetails = null;
+$orderDetails = [];
 $error = '';
 
-// Sprawdzanie, czy formularz został wysłany
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
-    $orderId = intval($_POST['order_id']); // Bezpieczne rzutowanie na liczbę całkowitą
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_group_id'])) {
+    $orderGroupId = intval($_POST['order_group_id']);
 
-    // Pobranie danych zamówienia z bazy danych
     $query = "
         SELECT 
-            zamowienia.id,
+            zamowienia.id AS order_id,
             zamowienia.product_id,
             zamowienia.imie,
             zamowienia.nazwisko,
@@ -28,24 +25,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
             zamowienia.status,
             zamowienia.created_at,
             zamowienia.closed_at,
-            zamowienia.payment_method_id,
-            zamowienia.delivery_method_id,
-            zamowienia.delivery_cost,
-            products.name AS product_name
+            products.name AS product_name,
+            product_images.image_path AS product_image,
+            order_group.delivery_method_id,
+            order_group.payment_method_id,
+            order_group.delivery_cost,
+            delivery_methods.name AS delivery_method,
+            payment_methods.name AS payment_method
         FROM zamowienia
         LEFT JOIN products ON zamowienia.product_id = products.id
-        WHERE zamowienia.id = ?
+        LEFT JOIN product_images ON products.id = product_images.product_id
+        LEFT JOIN order_group ON zamowienia.order_group_id = order_group.id
+        LEFT JOIN delivery_methods ON order_group.delivery_method_id = delivery_methods.id
+        LEFT JOIN payment_methods ON order_group.payment_method_id = payment_methods.id
+        WHERE zamowienia.order_group_id = ?
+        GROUP BY zamowienia.id
     ";
 
     $stmt = $conn->prepare($query);
-    $stmt->bind_param('i', $orderId);
+    $stmt->bind_param('i', $orderGroupId);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $orderDetails = $result->fetch_assoc();
+        while ($row = $result->fetch_assoc()) {
+            $orderDetails[] = $row;
+        }
     } else {
-        $error = 'Nie znaleziono zamówienia o podanym ID.';
+        $error = 'Nie znaleziono zamówień dla podanego ID grupy zamówienia.';
     }
 }
 ?>
@@ -55,8 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprawdź Zamówienie</title>
-    
+    <title>Sprawdź Zamówienia</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -76,6 +82,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
             padding: 20px;
             margin-top: 20px;
         }
+        .order-item {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .order-item img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 20px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -87,37 +106,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
 </nav>
 
 <div class="container">
-    <h1 class="text-center mb-4">Sprawdź Zamówienie</h1>
+    <h1 class="text-center mb-4">Sprawdź Zamówienia</h1>
     <form method="POST" action="zamowienia.php" class="mb-4">
         <div class="mb-3">
-            <label for="order_id" class="form-label">ID Zamówienia:</label>
-            <input type="number" id="order_id" name="order_id" class="form-control" placeholder="Wpisz ID zamówienia" required>
+            <label for="order_group_id" class="form-label">ID Grupy Zamówienia:</label>
+            <input type="number" id="order_group_id" name="order_group_id" class="form-control" placeholder="Wpisz ID grupy zamówienia" required>
         </div>
         <button type="submit" class="btn btn-primary w-100">Sprawdź</button>
     </form>
 
     <?php if (!empty($error)): ?>
         <div class="alert alert-danger text-center"><?= htmlspecialchars($error) ?></div>
-    <?php elseif ($orderDetails): ?>
+    <?php elseif (!empty($orderDetails)): ?>
         <div class="order-details">
-            <h2>Szczegóły Zamówienia</h2>
-            <p><strong>ID Zamówienia:</strong> <?= htmlspecialchars($orderDetails['id']) ?></p>
-            <p><strong>Produkt:</strong> <?= htmlspecialchars($orderDetails['product_name']) ?> (ID: <?= htmlspecialchars($orderDetails['product_id']) ?>)</p>
-            <p><strong>Imię:</strong> <?= htmlspecialchars($orderDetails['imie']) ?></p>
-            <p><strong>Nazwisko:</strong> <?= htmlspecialchars($orderDetails['nazwisko']) ?></p>
-            <p><strong>Email:</strong> <?= htmlspecialchars($orderDetails['email']) ?></p>
-            <p><strong>Telefon:</strong> <?= htmlspecialchars($orderDetails['phone']) ?></p>
-            <p><strong>Adres:</strong> <?= htmlspecialchars($orderDetails['street']) ?> <?= htmlspecialchars($orderDetails['house_number']) ?>, <?= htmlspecialchars($orderDetails['postal_code']) ?> <?= htmlspecialchars($orderDetails['city']) ?></p>
-            <p><strong>Ilość:</strong> <?= htmlspecialchars($orderDetails['amount']) ?></p>
-            <p><strong>Cena:</strong> <?= htmlspecialchars($orderDetails['price']) ?> zł</p>
-            <p><strong>Status:</strong> <?= htmlspecialchars($orderDetails['status']) ?></p>
-            <p><strong>Data utworzenia:</strong> <?= htmlspecialchars($orderDetails['created_at']) ?></p>
-            <?php if ($orderDetails['closed_at']): ?>
-                <p><strong>Data zamknięcia:</strong> <?= htmlspecialchars($orderDetails['closed_at']) ?></p>
-            <?php endif; ?>
-            <p><strong>Metoda płatności:</strong> <?= htmlspecialchars($orderDetails['payment_method_id']) ?></p>
-            <p><strong>Metoda dostawy:</strong> <?= htmlspecialchars($orderDetails['delivery_method_id']) ?></p>
-            <p><strong>Koszt dostawy:</strong> <?= htmlspecialchars($orderDetails['delivery_cost']) ?> zł</p>
+            <h2>Szczegóły Grupy Zamówienia</h2>
+            <p><strong>ID Grupy Zamówienia:</strong> <?= htmlspecialchars($orderGroupId) ?></p>
+            <p><strong>Metoda Dostawy:</strong> <?= htmlspecialchars($orderDetails[0]['delivery_method']) ?></p>
+            <p><strong>Metoda Płatności:</strong> <?= htmlspecialchars($orderDetails[0]['payment_method']) ?></p>
+            <p><strong>Koszt Dostawy:</strong> <?= htmlspecialchars($orderDetails[0]['delivery_cost']) ?> zł</p>
+            <h3 class="mt-4">Lista Zamówień:</h3>
+            <?php foreach ($orderDetails as $order): ?>
+                <div class="order-item">
+                    <img src="<?= htmlspecialchars($order['product_image'] ?: 'uploads/default.jpg') ?>" alt="Zdjęcie produktu">
+                    <div>
+                        <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']) ?></p>
+                        <p><strong>Imię:</strong> <?= htmlspecialchars($order['imie']) ?></p>
+                        <p><strong>Nazwisko:</strong> <?= htmlspecialchars($order['nazwisko']) ?></p>
+                        <p><strong>Adres:</strong> <?= htmlspecialchars($order['street']) ?> <?= htmlspecialchars($order['house_number']) ?>, <?= htmlspecialchars($order['postal_code']) ?> <?= htmlspecialchars($order['city']) ?></p>
+                        <p><strong>Ilość:</strong> <?= htmlspecialchars($order['amount']) ?></p>
+                        <p><strong>Cena:</strong> <?= htmlspecialchars($order['price']) ?> zł</p>
+                        <p><strong>Status:</strong> <?= htmlspecialchars($order['status']) ?></p>
+                        <p><strong>Data Utworzenia:</strong> <?= htmlspecialchars($order['created_at']) ?></p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         </div>
     <?php endif; ?>
 </div>

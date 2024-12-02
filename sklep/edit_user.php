@@ -117,7 +117,7 @@ if (isset($_GET['id'])) {
             <button type="submit" class="btn btn-primary w-100">Dodaj Notatkę</button>
         </form>
 
-        <a href="admin_dashboard.php" class="back-button">Powrót do panelu</a>
+        <a href="admin_dashboard_user.php" class="back-button">Powrót do panelu</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
