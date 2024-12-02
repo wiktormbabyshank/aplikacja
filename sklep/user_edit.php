@@ -2,12 +2,15 @@
 session_start();
 include('db_connection.php');
 
+// Sprawdzenie, czy użytkownik jest zalogowany
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.html");
     exit;
 }
 
 $user_id = $_SESSION['id'];
+
+// Pobranie danych użytkownika
 $query = "SELECT * FROM uzytkownicy WHERE id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
@@ -21,11 +24,58 @@ if ($result->num_rows == 0) {
 
 $user = $result->fetch_assoc();
 
+// Obsługa formularza edycji danych
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+    // Pobieranie danych z formularza
+    $imie = htmlspecialchars($_POST['imie']);
+    $nazwisko = htmlspecialchars($_POST['nazwisko']);
+    $email = htmlspecialchars($_POST['email']);
+    $phone = htmlspecialchars($_POST['phone']);
+    $city = htmlspecialchars($_POST['city']);
+    $street = htmlspecialchars($_POST['street']);
+    $house_number = htmlspecialchars($_POST['house_number']);
+    $postal_code = htmlspecialchars($_POST['postal_code']);
+
+    // Aktualizacja danych w bazie
+    $update_query = "
+        UPDATE uzytkownicy
+        SET imie = ?, nazwisko = ?, email = ?, phone = ?, city = ?, street = ?, house_number = ?, postal_code = ?
+        WHERE id = ?
+    ";
+    $update_stmt = $conn->prepare($update_query);
+
+    if (!$update_stmt) {
+        die("Błąd przygotowania zapytania: " . $conn->error);
+    }
+
+    $update_stmt->bind_param(
+        "ssssssssi",
+        $imie,
+        $nazwisko,
+        $email,
+        $phone,
+        $city,
+        $street,
+        $house_number,
+        $postal_code,
+        $user_id
+    );
+
+    if ($update_stmt->execute()) {
+        echo "<div class='alert alert-success'>Dane zostały zaktualizowane pomyślnie!</div>";
+        // Odświeżenie danych użytkownika po aktualizacji
+        header("Refresh:0");
+    } else {
+        echo "<div class='alert alert-danger'>Błąd podczas aktualizacji danych: " . $update_stmt->error . "</div>";
+    }
+}
+
+// Pobranie zamówień użytkownika
 $orders_query = "
     SELECT 
         og.id AS group_id, 
-        og.delivery_method_id, 
-        og.payment_method_id, 
+        dm.name AS delivery_method_name, 
+        pm.name AS payment_method_name, 
         og.delivery_cost, 
         zu.id AS order_id, 
         zu.product_id, 
@@ -38,6 +88,8 @@ $orders_query = "
     FROM order_group og
     LEFT JOIN zamowienia_users zu ON zu.order_group_id = og.id
     LEFT JOIN products p ON zu.product_id = p.id
+    LEFT JOIN delivery_methods dm ON og.delivery_method_id = dm.id
+    LEFT JOIN payment_methods pm ON og.payment_method_id = pm.id
     WHERE zu.user_id = ?
     ORDER BY zu.status, og.id DESC, zu.created_at DESC
 ";
@@ -51,19 +103,16 @@ $completed_orders = [];
 
 while ($row = $orders_result->fetch_assoc()) {
     $group_id = $row['group_id'];
+    $group_details = [
+        'delivery_method_name' => $row['delivery_method_name'],
+        'payment_method_name' => $row['payment_method_name'],
+        'delivery_cost' => $row['delivery_cost'],
+    ];
     if ($row['status'] === 'w realizacji') {
-        $pending_orders[$group_id]['group_details'] = [
-            'delivery_method_id' => $row['delivery_method_id'],
-            'payment_method_id' => $row['payment_method_id'],
-            'delivery_cost' => $row['delivery_cost'],
-        ];
+        $pending_orders[$group_id]['group_details'] = $group_details;
         $pending_orders[$group_id]['orders'][] = $row;
     } elseif ($row['status'] === 'zrealizowane') {
-        $completed_orders[$group_id]['group_details'] = [
-            'delivery_method_id' => $row['delivery_method_id'],
-            'payment_method_id' => $row['payment_method_id'],
-            'delivery_cost' => $row['delivery_cost'],
-        ];
+        $completed_orders[$group_id]['group_details'] = $group_details;
         $completed_orders[$group_id]['orders'][] = $row;
     }
 }
@@ -76,40 +125,6 @@ while ($row = $orders_result->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edytuj swoje dane</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .edit-card, .order-group {
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        .order-group {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: white;
-        }
-        .order-title {
-            font-weight: bold;
-        }
-        .order-status {
-            font-weight: bold;
-        }
-        .order-item {
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: #f9f9f9;
-        }
-        .order-item:last-child {
-            margin-bottom: 0;
-        }
-    </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
@@ -151,7 +166,7 @@ while ($row = $orders_result->fetch_assoc()) {
 
 <div class="container">
     <h1 class="text-center mb-4">Edytuj swoje dane</h1>
-    <div class="card edit-card p-4 mb-5">
+    <div class="card p-4 mb-5">
         <form action="user_edit.php" method="post">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -180,7 +195,7 @@ while ($row = $orders_result->fetch_assoc()) {
                 </div>
                 <div class="col-md-6">
                     <label for="house_number" class="form-label">Numer Domu:</label>
-                    <input type="number" id="house_number" name="house_number" class="form-control" value="<?= htmlspecialchars($user['house_number']); ?>">
+                    <input type="text" id="house_number" name="house_number" class="form-control" value="<?= htmlspecialchars($user['house_number']); ?>">
                 </div>
                 <div class="col-md-6">
                     <label for="postal_code" class="form-label">Kod pocztowy:</label>
@@ -192,46 +207,44 @@ while ($row = $orders_result->fetch_assoc()) {
     </div>
 
     <div class="row">
-        <div class="col-md-6">
-            <h3 class="text-center mb-4">Zamówienia w realizacji</h3>
-            <?php foreach ($pending_orders as $group_id => $group): ?>
-                <div class="order-group">
-                    <h4>Grupa Zamówień ID: <?= $group_id; ?></h4>
-                    <p>Metoda dostawy: <?= htmlspecialchars($group['group_details']['delivery_method_id']); ?></p>
-                    <p>Koszt dostawy: <?= number_format($group['group_details']['delivery_cost'], 2); ?> zł</p>
+    <div class="col-md-6">
+        <h3 class="text-center mb-4">Zamówienia w realizacji</h3>
+        <?php foreach ($pending_orders as $group_id => $group): ?>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Grupa Zamówień ID: <?= $group_id; ?></h5>
+                    <p><strong>Metoda dostawy:</strong> <?= htmlspecialchars($group['group_details']['delivery_method_name']); ?></p>
+                    <p><strong>Metoda płatności:</strong> <?= htmlspecialchars($group['group_details']['payment_method_name']); ?></p>
+                    <p><strong>Koszt dostawy:</strong> <?= number_format($group['group_details']['delivery_cost'], 2); ?> zł</p>
                     <?php foreach ($group['orders'] as $order): ?>
-                        <div class="order-item">
-                            <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']); ?></p>
-                            <p><strong>Ilość:</strong> <?= $order['amount']; ?></p>
-                            <p><strong>Cena:</strong> <?= number_format($order['price'], 2); ?> zł</p>
-                            <p><strong>Status:</strong> <?= htmlspecialchars($order['status']); ?></p>
-                            <p><strong>Data utworzenia:</strong> <?= htmlspecialchars($order['created_at']); ?></p>
-                        </div>
+                        <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']); ?>, 
+                           <strong>Ilość:</strong> <?= $order['amount']; ?>, 
+                           <strong>Cena:</strong> <?= number_format($order['price'], 2); ?> zł</p>
                     <?php endforeach; ?>
                 </div>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="col-md-6">
-            <h3 class="text-center mb-4">Zrealizowane zamówienia</h3>
-            <?php foreach ($completed_orders as $group_id => $group): ?>
-                <div class="order-group">
-                    <h4>Grupa Zamówień ID: <?= $group_id; ?></h4>
-                    <p>Metoda dostawy: <?= htmlspecialchars($group['group_details']['delivery_method_id']); ?></p>
-                    <p>Koszt dostawy: <?= number_format($group['group_details']['delivery_cost'], 2); ?> zł</p>
-                    <?php foreach ($group['orders'] as $order): ?>
-                        <div class="order-item">
-                            <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']); ?></p>
-                            <p><strong>Ilość:</strong> <?= $order['amount']; ?></p>
-                            <p><strong>Cena:</strong> <?= number_format($order['price'], 2); ?> zł</p>
-                            <p><strong>Status:</strong> <?= htmlspecialchars($order['status']); ?></p>
-                            <p><strong>Data zamknięcia:</strong> <?= htmlspecialchars($order['closed_at']); ?></p>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
+            </div>
+        <?php endforeach; ?>
     </div>
+
+    <div class="col-md-6">
+        <h3 class="text-center mb-4">Zrealizowane zamówienia</h3>
+        <?php foreach ($completed_orders as $group_id => $group): ?>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Grupa Zamówień ID: <?= $group_id; ?></h5>
+                    <p><strong>Metoda dostawy:</strong> <?= htmlspecialchars($group['group_details']['delivery_method_name']); ?></p>
+                    <p><strong>Metoda płatności:</strong> <?= htmlspecialchars($group['group_details']['payment_method_name']); ?></p>
+                    <p><strong>Koszt dostawy:</strong> <?= number_format($group['group_details']['delivery_cost'], 2); ?> zł</p>
+                    <?php foreach ($group['orders'] as $order): ?>
+                        <p><strong>Produkt:</strong> <?= htmlspecialchars($order['product_name']); ?>, 
+                           <strong>Ilość:</strong> <?= $order['amount']; ?>, 
+                           <strong>Cena:</strong> <?= number_format($order['price'], 2); ?> zł</p>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
