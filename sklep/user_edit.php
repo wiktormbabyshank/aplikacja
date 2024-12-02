@@ -2,7 +2,6 @@
 session_start();
 include('db_connection.php');
 
-// Sprawdzenie, czy użytkownik jest zalogowany
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.html");
     exit;
@@ -10,7 +9,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
 $user_id = $_SESSION['id'];
 
-// Pobranie danych użytkownika
 $query = "SELECT * FROM uzytkownicy WHERE id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
@@ -24,9 +22,7 @@ if ($result->num_rows == 0) {
 
 $user = $result->fetch_assoc();
 
-// Obsługa formularza edycji danych
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
-    // Pobieranie danych z formularza
     $imie = htmlspecialchars($_POST['imie']);
     $nazwisko = htmlspecialchars($_POST['nazwisko']);
     $email = htmlspecialchars($_POST['email']);
@@ -36,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     $house_number = htmlspecialchars($_POST['house_number']);
     $postal_code = htmlspecialchars($_POST['postal_code']);
 
-    // Aktualizacja danych w bazie
     $update_query = "
         UPDATE uzytkownicy
         SET imie = ?, nazwisko = ?, email = ?, phone = ?, city = ?, street = ?, house_number = ?, postal_code = ?
@@ -63,14 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
     if ($update_stmt->execute()) {
         echo "<div class='alert alert-success'>Dane zostały zaktualizowane pomyślnie!</div>";
-        // Odświeżenie danych użytkownika po aktualizacji
         header("Refresh:0");
     } else {
         echo "<div class='alert alert-danger'>Błąd podczas aktualizacji danych: " . $update_stmt->error . "</div>";
     }
 }
 
-// Pobranie zamówień użytkownika
 $orders_query = "
     SELECT 
         og.id AS group_id, 
